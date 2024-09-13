@@ -9,7 +9,7 @@ const echoService = new EchoService();
 const pingOpenAPI = openAPI.get("/ping", {
   responses: {
     200: openAPI.jsonRes({
-      description: "Pong!",
+      description: "Pong Response",
       schema: z.object({
         message: z.literal("pong"),
       }),
