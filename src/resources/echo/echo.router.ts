@@ -36,7 +36,6 @@ const echoOpenAPI = openAPI.post("/", {
       }),
     }),
     400: openAPI.error({ description: "Bad Input Error" }),
-    500: openAPI.error({ description: "Internal Server Error" }),
   },
 });
 
