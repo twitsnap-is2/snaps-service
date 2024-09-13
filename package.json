@@ -1,0 +1,32 @@
+{
+  "name": "ts-service-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui --coverage",
+    "test:ci": "vitest run --coverage"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "@vitest/coverage-v8": "^2.1.0",
+    "@vitest/ui": "^2.1.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.4",
+    "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.12.2",
+    "@hono/swagger-ui": "^0.4.1",
+    "@hono/zod-openapi": "^0.16.0",
+    "@t3-oss/env-core": "^0.11.1",
+    "dotenv": "^16.4.5",
+    "hono": "^4.6.1",
+    "zod": "^3.23.8"
+  }
+}
