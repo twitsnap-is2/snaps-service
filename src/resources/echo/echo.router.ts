@@ -43,13 +43,6 @@ const echoOpenAPI = openAPI.route("POST", "/", {
 echoRouter.openapi(echoOpenAPI, async (c) => {
   const body = c.req.valid("json");
 
-  const { data, error } = await echo.GET("/echo/ping");
-
-  if (error) {
-  } else {
-    console.log("YEAH!", data.message);
-  }
-
   const message = await echoService.echo(body.message);
   return c.json({ message });
 });
