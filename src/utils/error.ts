@@ -1,11 +1,8 @@
 import { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { BlankEnv, HTTPResponseError, ValidationTargets } from "hono/types";
+import { BlankEnv } from "hono/types";
 import { StatusCode } from "hono/utils/http-status";
-import { validator } from "hono/validator";
-import { z } from "zod";
 import { logger } from "./logger.js";
-import { env } from "../env.js";
 
 export type CustomErrorProps = {
   type?: string;

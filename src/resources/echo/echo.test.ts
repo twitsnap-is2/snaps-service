@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { app } from "../..";
+import { app } from "../../index.js";
 
 describe("GET /echo/ping", () => {
   test("Correctly", async () => {

@@ -1,5 +1,5 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { CustomError } from "./error";
+import { CustomError } from "./error.js";
 
 function router() {
   return new OpenAPIHono({
@@ -73,7 +73,10 @@ function route<
   const responses = {} as ResponseComplete;
 
   Object.entries(props.responses).forEach(([key, value]) => {
-    responses[key] = { description: value.description, content: { "application/json": { schema: value.schema } } };
+    responses[key as never] = {
+      description: value.description,
+      content: { "application/json": { schema: value.schema as never } },
+    };
   });
 
   return createRoute({

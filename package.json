@@ -2,10 +2,13 @@
   "name": "ts-service-template",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "test": "vitest",
+    "build": "tsc -p .",
+    "external:gen": "npx openapi-typescript http://localhost:3000/openapi.json -o ./src/external/defs/echo.d.ts",
     "test:ui": "vitest --ui --coverage",
     "test:ci": "vitest run --coverage"
   },
@@ -27,6 +30,7 @@
     "@t3-oss/env-core": "^0.11.1",
     "dotenv": "^16.4.5",
     "hono": "^4.6.1",
+    "openapi-fetch": "^0.12.0",
     "zod": "^3.23.8"
   }
 }

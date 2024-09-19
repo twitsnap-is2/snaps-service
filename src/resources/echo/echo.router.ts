@@ -1,6 +1,7 @@
 import { EchoService } from "./echo.service.js";
 import { z } from "@hono/zod-openapi";
 import { openAPI } from "../../utils/open-api.js";
+import { echo } from "../../external/auth.external.js";
 
 export const echoRouter = openAPI.router();
 
@@ -20,6 +21,7 @@ const pingOpenAPI = openAPI.route("GET", "/ping", {
 
 echoRouter.openapi(pingOpenAPI, async (c) => {
   const response = await echoService.ping();
+
   return c.json({ message: response }, 200);
 });
 
@@ -41,6 +43,13 @@ const echoOpenAPI = openAPI.route("POST", "/", {
 echoRouter.openapi(echoOpenAPI, async (c) => {
   const body = c.req.valid("json");
 
+  const { data, error } = await echo.GET("/echo/ping");
+
+  if (error) {
+  } else {
+    console.log("YEAH!", data.message);
+  }
+
   const message = await echoService.echo(body.message);
-  return c.json({ message }, 200);
+  return c.json({ message });
 });
