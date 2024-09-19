@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
       env: loadEnv(mode, process.cwd(), ""),
       pool: "forks",
       coverage: {
-        reporter: ["text", "json-summary", "json"],
+        reporter: ["text", "html", "json-summary", "json"],
         reportOnFailure: true,
       },
       // fileParallelism: false,

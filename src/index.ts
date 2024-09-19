@@ -17,18 +17,23 @@ app.use(
 
 app.use(trimTrailingSlash());
 
-app.doc("/doc", {
+app.doc("/openapi.json", {
   openapi: "3.0.0",
   info: {
     version: "1.0.0",
-    title: "My API",
+    title: "Echo Service",
   },
 });
+app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
+  type: "http",
+  scheme: "Bearer",
+});
 
-app.get("/swagger", swaggerUI({ url: "/doc" }));
+app.get("/swagger", swaggerUI({ url: "/openapi.json" }));
 
 app.route("/echo", echoRouter);
 
 serve({ fetch: app.fetch, port: env.PORT, hostname: env.HOSTNAME }, () => {
   console.log(`Running at: http://${env.HOSTNAME}:${env.PORT}`);
+  console.log(`Swagger UI at: http://${env.HOSTNAME}:${env.PORT}/swagger`);
 });

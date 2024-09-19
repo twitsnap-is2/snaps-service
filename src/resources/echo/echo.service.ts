@@ -1,6 +1,6 @@
 export class EchoService {
   async ping() {
-    return "pong";
+    return "pong" as const;
   }
 
   async echo(body: string) {
