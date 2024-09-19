@@ -47,8 +47,8 @@ function router() {
 function route<
   TParams extends z.AnyZodObject | undefined,
   TQuery extends z.AnyZodObject | undefined,
-  TBody extends z.AnyZodObject | undefined,
-  TResponses extends Record<number, { description: string; schema: z.AnyZodObject }>
+  TBody extends z.ZodTypeAny | undefined,
+  TResponses extends Record<number, { description: string; schema: z.ZodTypeAny }>
 >(
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
   path: string,
@@ -65,7 +65,7 @@ function route<
       description: string;
       content: {
         "application/json": {
-          schema: TResponses[K] extends { schema: z.AnyZodObject } ? TResponses[K]["schema"] : never;
+          schema: TResponses[K] extends { schema: z.ZodTypeAny } ? TResponses[K]["schema"] : never;
         };
       };
     };
@@ -95,7 +95,7 @@ function route<
               "application/json": { schema: props.body },
             },
           }
-        : undefined) as TBody extends z.AnyZodObject
+        : undefined) as TBody extends z.ZodTypeAny
         ? { description: string; required: true; content: { "application/json": { schema: TBody } } }
         : undefined,
     },
