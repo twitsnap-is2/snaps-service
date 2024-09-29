@@ -31,6 +31,7 @@ snapRouter.openapi(getSnapsOpenAPI, async (c) => {
 const postSnapOpenAPI = openAPI.route("POST", "/", {
   group: "Snap",
   body: z.object({
+    userName: z.string(),
     content: z.string(),
   }),
   responses: {
@@ -47,7 +48,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
 snapRouter.openapi(postSnapOpenAPI, async (c) => {
   const body = c.req.valid("json");
 
-  const response = await snapService.creatSnap();
+  const response = await snapService.createSnap(body);
 
   return c.json(response, 201);
 });

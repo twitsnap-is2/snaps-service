@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { env } from "../env.js";
 
 const createPrimsaClient = () => {
-  new PrismaClient({
+  return new PrismaClient({
     log:
       env.ENV === "development"
         ? ["warn", "error"]
@@ -11,7 +11,7 @@ const createPrimsaClient = () => {
         : ["error"],
     datasources: {
       db: {
-        url: env.DATABASE_URL,
+        url: `postgresql://${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}@${env.POSTGRES_HOST}:${env.POSTGRES_PORT}/${env.POSTGRES_NAME}?schema=public`,
       },
     },
   });

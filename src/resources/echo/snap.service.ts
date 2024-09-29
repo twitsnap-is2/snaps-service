@@ -1,21 +1,13 @@
+import { db } from "../../utils/db.js";
+
 export class SnapService {
-  async creatSnap() {
-    return {
-      userName: "Tomas",
-      content: "Test 123",
-    };
+  async createSnap(data: { userName: string; content: string }) {
+    return db.snap.create({
+      data,
+    });
   }
 
   async getSnaps() {
-    return [
-      {
-        userName: "Tomas",
-        content: "Test 123",
-      },
-      {
-        userName: "Bauti",
-        content: "Test 1234",
-      },
-    ];
+    return db.snap.findMany({ orderBy: { createdAt: "desc" } });
   }
 }
