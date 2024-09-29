@@ -10,4 +10,15 @@ export class SnapService {
   async getSnaps() {
     return db.snap.findMany({ orderBy: { createdAt: "desc" } });
   }
+
+  async get(id: string) {
+    console.log("id", id);
+    const snap = await db.snap.findUnique({
+      where: { id: id },
+    });
+    if (!snap) {
+      throw new Error("Snap not found");
+    }
+    return snap;
+  }
 }

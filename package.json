@@ -14,7 +14,7 @@
     "test:ci": "vitest run --coverage",
     "db:push": "npx prisma migrate dev",
     "db:dev": "docker compose --env-file .env up ",
-    "db:test": "docker compose up -d --env-file .env.test",
+    "db:test": "docker compose --env-file .env.test up -d",
     "db:test:down": "docker compose down",
     "db:studio": "npx prisma studio"
   },

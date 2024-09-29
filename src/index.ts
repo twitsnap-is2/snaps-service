@@ -21,7 +21,7 @@ app.doc("/openapi.json", {
   openapi: "3.0.0",
   info: {
     version: "1.0.0",
-    title: "Echo Service",
+    title: "Snap Service",
   },
 });
 app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
@@ -31,7 +31,7 @@ app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
 
 app.get("/swagger", swaggerUI({ url: "/openapi.json" }));
 
-app.route("/snap", snapRouter);
+app.route("/snaps", snapRouter);
 
 serve({ fetch: app.fetch, port: env.PORT, hostname: env.HOSTNAME }, () => {
   console.log(`Running at: http://${env.HOSTNAME}:${env.PORT}`);

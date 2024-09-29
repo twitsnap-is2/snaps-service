@@ -1,14 +1,23 @@
 import { describe, expect, test } from "vitest";
 import { app } from "../../index.js";
+import { assert } from "console";
+import { z } from "zod";
+import { snapSchema } from "./snap.router.js";
 
-describe("GET /echo/ping", () => {
-  test("Correctly", async () => {
-    const res = await app.request("/echo/ping");
+const getAllSchema = z.object({ data: snapSchema.array() });
+
+const getSnapsSchema = describe("GET /snaps/", () => {
+  test("Get Snaps Correctly", async () => {
+    const res = await app.request("/snaps");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ message: "pong" });
+    const body = await res.json();
+    console.log("Aca va el body: ", body);
+    expect(body[0].userName).toBe("User 1");
+    //expect(body[0].content).toBe("Snap 2");
   });
 });
 
+/*
 describe("POST /echo", () => {
   test("Correctly", async () => {
     const res = await app.request("/echo", {
@@ -36,3 +45,4 @@ describe("POST /echo", () => {
     });
   });
 });
+*/
