@@ -6,11 +6,17 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "test": "vitest",
+    "test": "npm run db:test && vitest run && npm run db:test:down",
     "build": "tsc -p .",
+    "start": "npm run db:push && node ./dist/src/index.js",
     "external:gen": "npx openapi-typescript http://localhost:3000/openapi.json -o ./src/external/defs/echo.d.ts",
     "test:ui": "vitest --ui --coverage",
-    "test:ci": "vitest run --coverage"
+    "test:ci": "vitest run --coverage",
+    "db:push": "npx prisma migrate dev",
+    "db:dev": "docker compose --env-file .env up ",
+    "db:test": "docker compose up -d --env-file .env.test",
+    "db:test:down": "docker compose down",
+    "db:studio": "npx prisma studio"
   },
   "author": "",
   "license": "ISC",
@@ -27,6 +33,7 @@
     "@hono/node-server": "^1.12.2",
     "@hono/swagger-ui": "^0.4.1",
     "@hono/zod-openapi": "^0.16.0",
+    "@prisma/client": "^5.20.0",
     "@t3-oss/env-core": "^0.11.1",
     "dotenv": "^16.4.5",
     "hono": "^4.6.1",
