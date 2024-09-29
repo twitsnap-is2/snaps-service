@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { env } from "../env.js";
 
 const createPrimsaClient = () => {
+  console.log("Creating PrismaClient in", env.POSTGRES_PORT);
   return new PrismaClient({
     log:
       env.ENV === "development"

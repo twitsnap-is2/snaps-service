@@ -1,8 +1,9 @@
 import { SnapService } from "./snap.service.js";
 import { z } from "@hono/zod-openapi";
 import { openAPI } from "../../utils/open-api.js";
-import { echo } from "../../external/auth.external.js";
 import { b } from "vitest/dist/chunks/suite.CcK46U-P.js";
+import { CustomError, errorSchema } from "../../utils/error.js";
+import { custom } from "zod";
 
 export const snapRouter = openAPI.router();
 
@@ -70,6 +71,14 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
 
 snapRouter.openapi(postSnapOpenAPI, async (c) => {
   const body = c.req.valid("json");
+
+  /*if (body.content.trim() === "") {
+    throw new CustomError({
+      title: "Could not create snap",
+      status: 400,
+      detail: "Snap content can't be empty",
+    });
+  }*/
 
   const response = await snapService.createSnap(body);
 

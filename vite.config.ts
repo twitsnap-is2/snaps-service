@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
         reportOnFailure: true,
       },
       // fileParallelism: false,
-      // setupFiles: ["./src/tests/setup.ts"],
+      setupFiles: ["./src/tests/setup.ts"],
     },
   };
 });
