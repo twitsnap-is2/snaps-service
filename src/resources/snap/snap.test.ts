@@ -11,9 +11,9 @@ describe("GET /snaps/", () => {
     const res = await app.request("/snaps");
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body[0].userName).toBe("User 2");
+    expect(body[0].username).toBe("User 2");
     expect(body[0].content).toBe("Snap 2");
-    expect(body[1].userName).toBe("User 1");
+    expect(body[1].username).toBe("User 1");
     expect(body[1].content).toBe("Snap 1");
   });
 });
@@ -26,14 +26,20 @@ describe("POST /snap", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userName: "User 1",
-        content: "Snap 1",
+        username: "Messi",
+        content:
+          "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
       }),
     });
     expect(res.status).toBe(201);
+
     const body = await res.json();
-    expect(body.userName).toBe("User 1");
-    expect(body.content).toBe("Snap 1");
+    expect(body.username).toBe("Messi");
+    expect(body.content).toBe(
+      "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona"
+    );
+    expect(body.mentions).toEqual(["@NeymarJr"]);
+    expect(body.hashtags).toEqual(["#Barcelona"]);
   });
 
   test("POST /snap no content", async () => {
@@ -43,56 +49,54 @@ describe("POST /snap", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userName: "User 1",
+        username: "User 1",
       }),
     });
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({
       type: "about:blank",
       title: "Invalid request POST /snaps",
-      detail: "message: Required",
+      detail: "content: Required",
       instance: "/snaps",
       status: 400,
     });
   });
 
   test("POST /snap content empty or too long", async () => {
-    const res = await app.request("/snaps", {
+    const resEmptyContent = await app.request("/snaps", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userName: "User 1",
+        username: "User 1",
         content: "",
       }),
     });
-    expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(resEmptyContent.status).toBe(400);
+    expect(await resEmptyContent.json()).toEqual({
       type: "about:blank",
-      title: "Could not create snap",
-      detail: "You must provide the content for the snap",
+      title: "Invalid request POST /snaps",
+      detail: "content: You must provide the content for the snap",
       instance: "/snaps",
       status: 400,
     });
-  });
 
-  test("POST /snap content too long", async () => {
-    const res = await app.request("/snaps", {
+    const resTooLongContent = await app.request("/snaps", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userName: "User 1",
-        content: "a".repeat(141),
+        username: "User 1",
+        content: "a".repeat(281),
       }),
     });
-    expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
+    expect(resTooLongContent.status).toBe(400);
+    expect(await resTooLongContent.json()).toEqual({
       type: "about:blank",
-      title: "Could not create snap",
-      detail: "Content too long, should be less than 140 characters",
+      title: "Invalid request POST /snaps",
+      detail: "content: Content too long, should be less than 280 characters",
       instance: "/snaps",
       status: 400,
     });
@@ -107,7 +111,7 @@ describe("GET /snaps/:id", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userName: "User 1",
+        username: "User 1",
         content: "Snap 1",
       }),
     });
@@ -116,7 +120,7 @@ describe("GET /snaps/:id", () => {
     const resGetSnap = await app.request(`/snaps/${body.id}`);
     expect(resGetSnap.status).toBe(200);
     const bodyGetSnap = await resGetSnap.json();
-    expect(bodyGetSnap.userName).toBe("User 1");
+    expect(bodyGetSnap.username).toBe("User 1");
     expect(bodyGetSnap.content).toBe("Snap 1");
   });
 

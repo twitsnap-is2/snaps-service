@@ -3,9 +3,10 @@ import { logger as honoLogger } from "hono/logger";
 import { logger } from "./utils/logger.js";
 import { env } from "./env.js";
 import { trimTrailingSlash } from "hono/trailing-slash";
-import { snapRouter } from "./resources/echo/snap.router.js";
+import { snapRouter } from "./resources/snap/snap.router.js";
 import { swaggerUI } from "@hono/swagger-ui";
 import { openAPI } from "./utils/open-api.js";
+import { errorHandler } from "./utils/error.js";
 
 export const app = openAPI.router();
 
@@ -28,6 +29,8 @@ app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
   type: "http",
   scheme: "Bearer",
 });
+
+app.onError(errorHandler);
 
 app.get("/swagger", swaggerUI({ url: "/openapi.json" }));
 

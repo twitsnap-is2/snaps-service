@@ -9,7 +9,6 @@
     "test": "npm run db:test && vitest run && npm run db:test:down",
     "build": "tsc -p .",
     "start": "npm run db:push && node ./dist/src/index.js",
-    "external:gen": "npx openapi-typescript http://localhost:3000/openapi.json -o ./src/external/defs/echo.d.ts",
     "test:ui": "vitest --ui --coverage",
     "test:ci": "vitest run --coverage",
     "db:push": "npx prisma migrate dev",

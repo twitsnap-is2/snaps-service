@@ -4,6 +4,7 @@ import { openAPI } from "../../utils/open-api.js";
 import { b } from "vitest/dist/chunks/suite.CcK46U-P.js";
 import { CustomError, errorSchema } from "../../utils/error.js";
 import { custom } from "zod";
+import { hash } from "crypto";
 
 export const snapRouter = openAPI.router();
 
@@ -11,7 +12,7 @@ const snapService = new SnapService();
 
 export const snapSchema = z.object({
   id: z.string(),
-  userName: z.string(),
+  username: z.string(),
   content: z.string(),
   createdAt: z.string(),
 });
@@ -28,7 +29,6 @@ const getSnapsOpenAPI = openAPI.route("GET", "/", {
 
 snapRouter.openapi(getSnapsOpenAPI, async (c) => {
   const response = await snapService.getSnaps();
-
   return c.json(response, 200);
 });
 
@@ -52,7 +52,6 @@ const getOpenAPI = openAPI.route("GET", "/{id}", {
 snapRouter.openapi(getOpenAPI, async (c) => {
   const params = c.req.valid("param");
   const response = await snapService.get(params.id);
-
   if (!response) {
     throw new CustomError({
       title: "Snap not found",
@@ -67,19 +66,22 @@ snapRouter.openapi(getOpenAPI, async (c) => {
 const postSnapOpenAPI = openAPI.route("POST", "/", {
   group: "Snap",
   body: z.object({
-    userName: z.string(),
-    content: z.string(),
+    username: z.string(),
+    content: z
+      .string()
+      .max(280, "Content too long, should be less than 280 characters")
+      .min(1, "You must provide the content for the snap"),
   }),
   responses: {
     201: {
       description: "Snap created",
       schema: z.object({
-        userName: z.string(),
+        username: z.string(),
         content: z.string(),
       }),
     },
     400: {
-      description: "Could not create snap",
+      description: "Invalid request POST /snaps",
       schema: errorSchema,
     },
   },
@@ -87,25 +89,13 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
 
 snapRouter.openapi(postSnapOpenAPI, async (c) => {
   const body = c.req.valid("json");
-  // TODO: Definir maximo de caracteres en twitsnap
-  const contentLength = body.content.length;
-  if (contentLength === 0 || contentLength > 140) {
-    throw new CustomError({
-      title: "Could not create snap",
-      status: 400,
-      detail:
-        contentLength === 0
-          ? "You must provide the content for the snap"
-          : "Content too long, should be less than 140 characters",
-    });
-  }
 
   const response = await snapService.create(body);
   if (!response) {
     throw new CustomError({
-      title: "Could not create snap",
+      title: "Invalid request POST /snaps",
       status: 400,
-      detail: "Could not create snap",
+      detail: "Invalid request POST /snaps",
     });
   }
 
