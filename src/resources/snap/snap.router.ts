@@ -15,6 +15,9 @@ export const snapSchema = z.object({
   username: z.string(),
   content: z.string(),
   createdAt: z.string(),
+  privado: z.boolean(),
+  hashtags: z.array(z.string()),
+  mentions: z.array(z.string()),
 });
 
 const getSnapsOpenAPI = openAPI.route("GET", "/", {

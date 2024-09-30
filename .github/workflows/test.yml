@@ -15,6 +15,22 @@ jobs:
       # Required to put a comment into the pull-request
       pull-requests: write
 
+    services:
+      postgres:
+        image: postgres:13
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: snaps_db_test
+    # env:
+    #   POSTGRES_USER: postgres
+    #   POSTGRES_PASSWORD: password_ps
+    #   POSTGRES_DB: test_db
+    #   POSTGRES_PORT: 5432
+    #   POSTGRES_HOST: localhost
+
     steps:
       - uses: actions/checkout@v4
       - name: "Install Node"

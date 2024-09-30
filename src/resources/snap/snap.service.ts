@@ -3,7 +3,7 @@ import { CustomError } from "../../utils/error.js";
 
 export class SnapService {
   async create(data: { username: string; content: string }) {
-    const words = data.content.split(" ");
+    const words = data.content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
