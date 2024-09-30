@@ -8,8 +8,11 @@ datasource db {
 }
 
 model Snap {
-  id  String  @id @default(uuid())
-  content String  
+  id        String   @id @default(uuid())
+  content   String
   createdAt DateTime @default(now())
-  userName String
+  userName  String
+  // privado/publico
+  // hashtags?
+  // etiquetas?
 }

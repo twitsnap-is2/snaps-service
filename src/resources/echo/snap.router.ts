@@ -42,12 +42,24 @@ const getOpenAPI = openAPI.route("GET", "/{id}", {
       description: "Get a snap",
       schema: snapSchema,
     },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
   },
 });
 
 snapRouter.openapi(getOpenAPI, async (c) => {
   const params = c.req.valid("param");
   const response = await snapService.get(params.id);
+
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
 
   return c.json(response, 200);
 });
@@ -66,21 +78,36 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
         content: z.string(),
       }),
     },
+    400: {
+      description: "Could not create snap",
+      schema: errorSchema,
+    },
   },
 });
 
 snapRouter.openapi(postSnapOpenAPI, async (c) => {
   const body = c.req.valid("json");
-
-  /*if (body.content.trim() === "") {
+  // TODO: Definir maximo de caracteres en twitsnap
+  const contentLength = body.content.length;
+  if (contentLength === 0 || contentLength > 140) {
     throw new CustomError({
       title: "Could not create snap",
       status: 400,
-      detail: "Snap content can't be empty",
+      detail:
+        contentLength === 0
+          ? "You must provide the content for the snap"
+          : "Content too long, should be less than 140 characters",
     });
-  }*/
+  }
 
-  const response = await snapService.createSnap(body);
+  const response = await snapService.create(body);
+  if (!response) {
+    throw new CustomError({
+      title: "Could not create snap",
+      status: 400,
+      detail: "Could not create snap",
+    });
+  }
 
   return c.json(response, 201);
 });
