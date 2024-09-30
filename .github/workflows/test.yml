@@ -21,9 +21,9 @@ jobs:
         ports:
           - 5433:5432
         env:
+          POSTGRES_NAME: snaps_db_test
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: snaps_db_test
     # env:
     #   POSTGRES_USER: postgres
     #   POSTGRES_PASSWORD: password_ps
