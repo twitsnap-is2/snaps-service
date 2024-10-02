@@ -16,6 +16,7 @@ export const snapSchema = z.object({
   content: z.string(),
   createdAt: z.string(),
   privado: z.boolean(),
+  blocked: z.boolean(),
   hashtags: z.array(z.string()),
   mentions: z.array(z.string()),
 });
@@ -103,4 +104,35 @@ snapRouter.openapi(postSnapOpenAPI, async (c) => {
   }
 
   return c.json(response, 201);
+});
+
+const blockSnapOpenAPI = openAPI.route("PUT", "/block/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  responses: {
+    200: {
+      description: "Block a snap",
+      schema: snapSchema,
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  },
+});
+
+snapRouter.openapi(blockSnapOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+  const response = await snapService.block(params.id);
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json(response, 200);
 });

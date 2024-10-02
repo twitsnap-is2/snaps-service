@@ -37,4 +37,21 @@ export class SnapService {
       });
     }
   }
+
+  async block(id: string) {
+    const snap = await this.get(id);
+
+    try {
+      return await db.snap.update({
+        where: { id: id },
+        data: { blocked: !snap?.blocked },
+      });
+    } catch (error) {
+      throw new CustomError({
+        title: "Snap not found",
+        status: 400,
+        detail: "Snap not found",
+      });
+    }
+  }
 }
