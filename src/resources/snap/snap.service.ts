@@ -10,7 +10,7 @@ export class SnapService {
       words[i].charAt(0) === "#" && hashtags.push(words[i]);
       words[i].charAt(0) === "@" && mentions.push(words[i]);
     }
-    return db.snap.create({
+    const snap = await db.snap.create({
       data: {
         username: data.username,
         content: data.content,
@@ -18,6 +18,7 @@ export class SnapService {
         mentions: mentions,
       },
     });
+    return snap;
   }
 
   async getSnaps() {

@@ -80,8 +80,14 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
     201: {
       description: "Snap created",
       schema: z.object({
+        id: z.string(),
         username: z.string(),
         content: z.string(),
+        createdAt: z.string(),
+        privado: z.boolean(),
+        blocked: z.boolean(),
+        hashtags: z.array(z.string()),
+        mentions: z.array(z.string()),
       }),
     },
     400: {
