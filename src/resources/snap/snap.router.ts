@@ -1,10 +1,7 @@
 import { SnapService } from "./snap.service.js";
 import { z } from "@hono/zod-openapi";
 import { openAPI } from "../../utils/open-api.js";
-import { b } from "vitest/dist/chunks/suite.CcK46U-P.js";
 import { CustomError, errorSchema } from "../../utils/error.js";
-import { custom } from "zod";
-import { hash } from "crypto";
 
 export const snapRouter = openAPI.router();
 
@@ -19,6 +16,12 @@ export const snapSchema = z.object({
   blocked: z.boolean(),
   hashtags: z.array(z.string()),
   mentions: z.array(z.string()),
+  medias: z.array(
+    z.object({
+      path: z.string(),
+      mimeType: z.string(),
+    })
+  ),
 });
 
 const getSnapsOpenAPI = openAPI.route("GET", "/", {
@@ -76,6 +79,12 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
       .max(280, "Content too long, should be less than 280 characters")
       .min(1, "You must provide the content for the snap"),
     private: z.boolean(),
+    medias: z.array(
+      z.object({
+        path: z.string(),
+        mimeType: z.string(),
+      })
+    ),
   }),
   responses: {
     201: {
@@ -89,6 +98,12 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
         blocked: z.boolean(),
         hashtags: z.array(z.string()),
         mentions: z.array(z.string()),
+        medias: z.array(
+          z.object({
+            path: z.string(),
+            mimeType: z.string(),
+          })
+        ),
       }),
     },
     400: {
@@ -121,7 +136,9 @@ const blockSnapOpenAPI = openAPI.route("PUT", "/block/{id}", {
   responses: {
     200: {
       description: "Block a snap",
-      schema: snapSchema,
+      schema: z.object({
+        id: z.string(),
+      }),
     },
     400: {
       description: "Snap not found",

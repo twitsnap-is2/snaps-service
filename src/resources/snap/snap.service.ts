@@ -2,7 +2,12 @@ import { db } from "../../utils/db.js";
 import { CustomError } from "../../utils/error.js";
 
 export class SnapService {
-  async create(data: { username: string; content: string; private: boolean }) {
+  async create(data: {
+    username: string;
+    content: string;
+    private: boolean;
+    medias: { path: string; mimeType: string }[];
+  }) {
     const words = data.content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
     let hashtags = [];
     let mentions = [];
@@ -18,18 +23,32 @@ export class SnapService {
         hashtags: hashtags,
         mentions: mentions,
         privado: data.private,
+        medias: {
+          createMany: {
+            data: data.medias.map((media) => ({
+              path: media.path,
+              mimeType: media.mimeType,
+            })),
+          },
+        },
+      },
+      include: {
+        medias: true,
       },
     });
+
     return snap;
   }
 
   async getSnaps() {
-    return db.snap.findMany({ orderBy: { createdAt: "desc" } });
+    const snaps = await db.snap.findMany({ include: { medias: true }, orderBy: { createdAt: "desc" } });
+    return snaps;
   }
 
   async get(id: string) {
     try {
       return await db.snap.findUnique({
+        include: { medias: true },
         where: { id: id },
       });
     } catch (error) {
@@ -46,6 +65,7 @@ export class SnapService {
 
     try {
       return await db.snap.update({
+        select: { id: true },
         where: { id: id },
         data: { blocked: !snap?.blocked },
       });

@@ -13,7 +13,16 @@ model Snap {
   createdAt DateTime @default(now())
   username  String
   privado   Boolean  @default(false)
-  blocked   Boolean  @default(false) 
+  blocked   Boolean  @default(false)
   hashtags  String[]
   mentions  String[]
+  medias    Media[]
+}
+
+model Media {
+  id       String @id @default(uuid())
+  path     String
+  mimeType String
+  snapId   String
+  snap     Snap   @relation(fields: [snapId], references: [id])
 }
