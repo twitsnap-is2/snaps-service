@@ -24,12 +24,8 @@ jobs:
           POSTGRES_NAME: snaps_db_test
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
-    # env:
-    #   POSTGRES_USER: postgres
-    #   POSTGRES_PASSWORD: password_ps
-    #   POSTGRES_DB: test_db
-    #   POSTGRES_PORT: 5432
-    #   POSTGRES_HOST: localhost
+    env:
+      DATABASE_URL: postgresql://user:password@localhost:5433/snaps_db_test?schema=public
 
     steps:
       - uses: actions/checkout@v4
