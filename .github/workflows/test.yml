@@ -40,6 +40,9 @@ jobs:
       - name: "Install Deps"
         run: npm install
       - name: "Test"
+      - name: "Generate prisma"
+        run: npx prisma migrate reset --force
+      - name: "Test"
         run: npm run test:ci
       - name: "Report Coverage"
         # Set if: always() to also generate the report if tests are failing
