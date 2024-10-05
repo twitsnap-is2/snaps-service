@@ -2,7 +2,7 @@ import { db } from "../../utils/db.js";
 import { CustomError } from "../../utils/error.js";
 
 export class SnapService {
-  async create(data: { username: string; content: string }) {
+  async create(data: { username: string; content: string; private: boolean }) {
     const words = data.content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
     let hashtags = [];
     let mentions = [];
@@ -10,12 +10,14 @@ export class SnapService {
       words[i].charAt(0) === "#" && hashtags.push(words[i]);
       words[i].charAt(0) === "@" && mentions.push(words[i]);
     }
+
     const snap = await db.snap.create({
       data: {
         username: data.username,
         content: data.content,
         hashtags: hashtags,
         mentions: mentions,
+        privado: data.private,
       },
     });
     return snap;

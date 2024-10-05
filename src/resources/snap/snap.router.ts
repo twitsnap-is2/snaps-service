@@ -75,6 +75,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
       .string()
       .max(280, "Content too long, should be less than 280 characters")
       .min(1, "You must provide the content for the snap"),
+    private: z.boolean(),
   }),
   responses: {
     201: {
