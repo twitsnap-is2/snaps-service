@@ -39,7 +39,6 @@ jobs:
           node-version: "20.x"
       - name: "Install Deps"
         run: npm install
-      - name: "Test"
       - name: "Generate prisma"
         run: npx prisma migrate reset --force
       - name: "Test"
