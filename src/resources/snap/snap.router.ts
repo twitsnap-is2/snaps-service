@@ -26,6 +26,11 @@ export const snapSchema = z.object({
 
 const getSnapsOpenAPI = openAPI.route("GET", "/", {
   group: "Snap",
+  query: z.object({
+    username: z.string().optional(),
+    hashtags: z.array(z.string()).or(z.string()).optional(),
+    content: z.string().optional(),
+  }),
   responses: {
     200: {
       description: "Get all snaps",
@@ -35,7 +40,17 @@ const getSnapsOpenAPI = openAPI.route("GET", "/", {
 });
 
 snapRouter.openapi(getSnapsOpenAPI, async (c) => {
-  const response = await snapService.getSnaps();
+  const params = c.req.valid("query");
+  // Chequeo y conversión de 'hashtags' si es un string
+  const filters = {
+    ...params,
+    hashtags: Array.isArray(params.hashtags)
+      ? params.hashtags
+      : params.hashtags
+      ? [params.hashtags] // Si es un string, lo convierte en un array
+      : undefined, // Si es undefined, lo deja como undefined
+  };
+  const response = await snapService.getSnaps(filters);
   return c.json(response, 200);
 });
 

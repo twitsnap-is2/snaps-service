@@ -40,8 +40,20 @@ export class SnapService {
     return snap;
   }
 
-  async getSnaps() {
-    const snaps = await db.snap.findMany({ include: { medias: true }, orderBy: { createdAt: "desc" } });
+  async getSnaps(filters: {
+    username?: string;
+    hashtags?: string[];
+    content?: string;
+  }) {
+    const snaps = await db.snap.findMany({
+      include: { medias: true },
+      where: {
+        username: filters.username,
+        hashtags: filters.hashtags ? { hasSome: filters.hashtags } : undefined,
+        content: filters.content ? { contains: filters.content } : undefined,
+      },
+      orderBy: { createdAt: "desc" },
+    });
     return snaps;
   }
 
