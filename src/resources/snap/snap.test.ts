@@ -27,19 +27,20 @@ describe("POST /snap", () => {
       },
       body: JSON.stringify({
         username: "Messi",
-        content:
-          "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
+        content: "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
+        private: false,
+        medias: [],
       }),
     });
     expect(res.status).toBe(201);
 
     const body = await res.json();
     expect(body.username).toBe("Messi");
-    expect(body.content).toBe(
-      "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona"
-    );
+    expect(body.content).toBe("Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona");
     expect(body.mentions).toEqual(["@NeymarJr"]);
     expect(body.hashtags).toEqual(["#Barcelona"]);
+    expect(body.medias).toEqual([]);
+    expect(body.privado).toBe(false);
   });
 
   test("POST /snap no content", async () => {
@@ -56,7 +57,9 @@ describe("POST /snap", () => {
     expect(await res.json()).toEqual({
       type: "about:blank",
       title: "Invalid request POST /snaps",
-      detail: "content: Required",
+      detail: `content: Required,
+private: Required,
+medias: Required`,
       instance: "/snaps",
       status: 400,
     });
@@ -71,6 +74,8 @@ describe("POST /snap", () => {
       body: JSON.stringify({
         username: "User 1",
         content: "",
+        private: false,
+        medias: [],
       }),
     });
     expect(resEmptyContent.status).toBe(400);
@@ -90,6 +95,8 @@ describe("POST /snap", () => {
       body: JSON.stringify({
         username: "User 1",
         content: "a".repeat(281),
+        private: false,
+        medias: [],
       }),
     });
     expect(resTooLongContent.status).toBe(400);
@@ -113,6 +120,8 @@ describe("GET /snaps/:id", () => {
       body: JSON.stringify({
         username: "User 1",
         content: "Snap 1",
+        private: false,
+        medias: [],
       }),
     });
     const body = await res.json();
@@ -122,6 +131,10 @@ describe("GET /snaps/:id", () => {
     const bodyGetSnap = await resGetSnap.json();
     expect(bodyGetSnap.username).toBe("User 1");
     expect(bodyGetSnap.content).toBe("Snap 1");
+    expect(bodyGetSnap.mentions).toEqual([]);
+    expect(bodyGetSnap.hashtags).toEqual([]);
+    expect(bodyGetSnap.medias).toEqual([]);
+    expect(bodyGetSnap.privado).toBe(false);
   });
 
   test("Get snap not found", async () => {
