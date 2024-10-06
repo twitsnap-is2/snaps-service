@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "test": "npm run db:test && vitest run && npm run db:test:down",
     "build": "tsc -p .",
-    "start": "npm run db:push && node ./dist/src/index.js",
+    "start": "node ./dist/src/index.js",
     "test:ui": "vitest --ui --coverage",
     "test:ci": "vitest run --coverage",
     "db:push": "npx prisma migrate dev",
