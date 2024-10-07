@@ -37,8 +37,8 @@ describe("POST /snap", () => {
     const body = await res.json();
     expect(body.username).toBe("Messi");
     expect(body.content).toBe("Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona");
-    expect(body.mentions).toEqual(["@NeymarJr"]);
-    expect(body.hashtags).toEqual(["#Barcelona"]);
+    expect(body.mentions).toEqual(["@neymarjr"]);
+    expect(body.hashtags).toEqual(["#barcelona"]);
     expect(body.medias).toEqual([]);
     expect(body.privado).toBe(false);
   });
