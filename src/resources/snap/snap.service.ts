@@ -1,3 +1,4 @@
+import { setHours, setMinutes } from "date-fns";
 import { db } from "../../utils/db.js";
 import { CustomError } from "../../utils/error.js";
 
@@ -12,8 +13,8 @@ export class SnapService {
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].charAt(0) === "#" && hashtags.push(words[i]);
-      words[i].charAt(0) === "@" && mentions.push(words[i]);
+      words[i].charAt(0) === "#" && hashtags.push(words[i].toLowerCase());
+      words[i].charAt(0) === "@" && mentions.push(words[i].toLowerCase());
     }
 
     const snap = await db.snap.create({
@@ -42,15 +43,29 @@ export class SnapService {
 
   async getSnaps(filters: {
     username?: string;
-    hashtags?: string[];
+    hashtag?: string;
     content?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
   }) {
     const snaps = await db.snap.findMany({
       include: { medias: true },
       where: {
-        username: filters.username,
-        hashtags: filters.hashtags ? { hasSome: filters.hashtags } : undefined,
-        content: filters.content ? { contains: filters.content } : undefined,
+        username: { equals: filters.username, mode: "insensitive" },
+        hashtags: filters.hashtag
+          ? { has: filters.hashtag.toLowerCase() }
+          : undefined,
+        content: filters.content
+          ? { contains: filters.content, mode: "insensitive" }
+          : undefined,
+        createdAt: {
+          gte: filters.dateFrom
+            ? setMinutes(setHours(filters.dateFrom, 0), 0)
+            : undefined,
+          lte: filters.dateTo
+            ? setMinutes(setHours(filters.dateTo, 23), 59)
+            : undefined,
+        },
       },
       orderBy: { createdAt: "desc" },
     });
