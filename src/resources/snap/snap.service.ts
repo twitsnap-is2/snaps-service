@@ -47,24 +47,18 @@ export class SnapService {
     content?: string;
     dateFrom?: Date;
     dateTo?: Date;
+    limit?: number;
   }) {
     const snaps = await db.snap.findMany({
       include: { medias: true },
+      take: filters.limit ?? 20,
       where: {
         username: { equals: filters.username, mode: "insensitive" },
-        hashtags: filters.hashtag
-          ? { has: filters.hashtag.toLowerCase() }
-          : undefined,
-        content: filters.content
-          ? { contains: filters.content, mode: "insensitive" }
-          : undefined,
+        hashtags: filters.hashtag ? { has: filters.hashtag.toLowerCase() } : undefined,
+        content: filters.content ? { contains: filters.content, mode: "insensitive" } : undefined,
         createdAt: {
-          gte: filters.dateFrom
-            ? setMinutes(setHours(filters.dateFrom, 0), 0)
-            : undefined,
-          lte: filters.dateTo
-            ? setMinutes(setHours(filters.dateTo, 23), 59)
-            : undefined,
+          gt: filters.dateFrom,
+          lt: filters.dateTo,
         },
       },
       orderBy: { createdAt: "desc" },

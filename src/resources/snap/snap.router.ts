@@ -32,6 +32,7 @@ const getSnapsOpenAPI = openAPI.route("GET", "/", {
     content: z.string().optional(),
     dateFrom: z.coerce.date().optional(),
     dateTo: z.coerce.date().optional(),
+    limit: z.coerce.number().optional(),
   }),
   responses: {
     200: {
