@@ -12,8 +12,8 @@ export class SnapService {
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].charAt(0) === "#" && hashtags.push(words[i].toLowerCase());
-      words[i].charAt(0) === "@" && mentions.push(words[i].toLowerCase());
+      words[i].trim().charAt(0) === "#" && hashtags.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "@" && mentions.push(words[i].trim().toLowerCase());
     }
 
     const snap = await db.snap.create({
