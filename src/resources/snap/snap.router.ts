@@ -169,3 +169,37 @@ snapRouter.openapi(blockSnapOpenAPI, async (c) => {
 
   return c.json(response, 200);
 });
+
+
+const deleteSnapOpenAPI = openAPI.route("DELETE", "/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  responses: {
+    200: {
+      description: "Delete a snap",
+      schema: z.object({
+        id: z.string(),
+      }),
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  }
+});
+
+snapRouter.openapi(deleteSnapOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+  const response = await snapService.delete(params.id);
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json({id: response.id}, 200);
+});

@@ -97,4 +97,18 @@ export class SnapService {
       });
     }
   }
+
+  async delete(id: string) {
+    try {
+      return await db.snap.delete({
+        where: { id: id },
+      });
+    } catch (error) {
+      throw new CustomError({
+        title: "Snap not found",
+        status: 400,
+        detail: "Snap not found",
+      });
+    }
+  }
 }
