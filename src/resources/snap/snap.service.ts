@@ -12,8 +12,10 @@ export class SnapService {
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].trim().charAt(0) === "#" && hashtags.push(words[i].trim().toLowerCase());
-      words[i].trim().charAt(0) === "@" && mentions.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "#" &&
+        hashtags.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "@" &&
+        mentions.push(words[i].trim().toLowerCase());
     }
 
     const snap = await db.snap.create({
@@ -53,8 +55,12 @@ export class SnapService {
       take: filters.limit ?? 20,
       where: {
         username: { equals: filters.username, mode: "insensitive" },
-        hashtags: filters.hashtag ? { has: filters.hashtag.toLowerCase() } : undefined,
-        content: filters.content ? { contains: filters.content, mode: "insensitive" } : undefined,
+        hashtags: filters.hashtag
+          ? { has: filters.hashtag.toLowerCase() }
+          : undefined,
+        content: filters.content
+          ? { contains: filters.content, mode: "insensitive" }
+          : undefined,
         createdAt: {
           gt: filters.dateFrom,
           lt: filters.dateTo,
@@ -102,6 +108,48 @@ export class SnapService {
     try {
       return await db.snap.delete({
         where: { id: id },
+      });
+    } catch (error) {
+      throw new CustomError({
+        title: "Snap not found",
+        status: 400,
+        detail: "Snap not found",
+      });
+    }
+  }
+
+  async edit(
+    id: string,
+    content: string,
+    privado: boolean,
+    medias: { path: string; mimeType: string }[]
+  ) {
+    const words = content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
+    let hashtags = [];
+    let mentions = [];
+    for (let i = 0; i < words.length; i++) {
+      words[i].trim().charAt(0) === "#" &&
+        hashtags.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "@" &&
+        mentions.push(words[i].trim().toLowerCase());
+    }
+
+    try {
+      return await db.snap.update({
+        select: { id: true },
+        where: { id: id },
+        data: {
+          content: content,
+          hashtags: hashtags,
+          mentions: mentions,
+          privado: privado,
+          medias: {
+            deleteMany: {},
+            createMany: {
+              data: medias,
+            },
+          },
+        },
       });
     } catch (error) {
       throw new CustomError({

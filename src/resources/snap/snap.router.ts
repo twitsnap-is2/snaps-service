@@ -170,7 +170,6 @@ snapRouter.openapi(blockSnapOpenAPI, async (c) => {
   return c.json(response, 200);
 });
 
-
 const deleteSnapOpenAPI = openAPI.route("DELETE", "/{id}", {
   group: "Snap",
   params: z.object({
@@ -187,7 +186,7 @@ const deleteSnapOpenAPI = openAPI.route("DELETE", "/{id}", {
       description: "Snap not found",
       schema: errorSchema,
     },
-  }
+  },
 });
 
 snapRouter.openapi(deleteSnapOpenAPI, async (c) => {
@@ -201,5 +200,62 @@ snapRouter.openapi(deleteSnapOpenAPI, async (c) => {
     });
   }
 
-  return c.json({id: response.id}, 200);
+  return c.json({ id: response.id }, 200);
+});
+
+const editSnapOpenAPI = openAPI.route("PUT", "/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    content: z
+      .string()
+      .max(280, "Content too long, should be less than 280 characters")
+      .min(1, "You must provide the content for the snap"),
+    private: z.boolean(),
+    medias: z
+      .array(
+        z.object({
+          path: z.string(),
+          mimeType: z.string(),
+        })
+      )
+      .optional(),
+  }),
+  responses: {
+    200: {
+      description: "Edit a snap",
+      schema: z.object({
+        id: z.string(),
+      }),
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  },
+});
+
+snapRouter.openapi(editSnapOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+
+  const body = c.req.valid("json");
+
+  const response = await snapService.edit(
+    params.id,
+    body.content,
+    body.private,
+    body.medias ?? []
+  );
+
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json(response, 200);
 });
