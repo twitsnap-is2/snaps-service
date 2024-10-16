@@ -1,7 +1,8 @@
 name: snaps-${ENV}
 
 services:
-  db:
+  db-test:
+    container_name: snaps-db-test
     image: postgres:13
     restart: always
     env_file:
