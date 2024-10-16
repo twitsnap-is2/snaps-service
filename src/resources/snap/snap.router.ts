@@ -9,6 +9,7 @@ const snapService = new SnapService();
 
 export const snapSchema = z.object({
   id: z.string(),
+  userId: z.string(),
   username: z.string(),
   content: z.string(),
   createdAt: z.string(),
@@ -82,6 +83,7 @@ snapRouter.openapi(getOpenAPI, async (c) => {
 const postSnapOpenAPI = openAPI.route("POST", "/", {
   group: "Snap",
   body: z.object({
+    userId: z.string(),
     username: z.string(),
     content: z
       .string()
@@ -100,6 +102,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
       description: "Snap created",
       schema: z.object({
         id: z.string(),
+        userId: z.string(),
         username: z.string(),
         content: z.string(),
         createdAt: z.string(),
@@ -242,12 +245,7 @@ snapRouter.openapi(editSnapOpenAPI, async (c) => {
 
   const body = c.req.valid("json");
 
-  const response = await snapService.edit(
-    params.id,
-    body.content,
-    body.private,
-    body.medias ?? []
-  );
+  const response = await snapService.edit(params.id, body.content, body.private, body.medias ?? []);
 
   if (!response) {
     throw new CustomError({

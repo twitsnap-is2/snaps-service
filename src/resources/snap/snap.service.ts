@@ -3,6 +3,7 @@ import { CustomError } from "../../utils/error.js";
 
 export class SnapService {
   async create(data: {
+    userId: string;
     username: string;
     content: string;
     private: boolean;
@@ -18,6 +19,7 @@ export class SnapService {
 
     const snap = await db.snap.create({
       data: {
+        userId: data.userId,
         username: data.username,
         content: data.content,
         hashtags: hashtags,

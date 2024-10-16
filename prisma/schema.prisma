@@ -11,6 +11,7 @@ model Snap {
   id        String   @id @default(uuid())
   content   String
   createdAt DateTime @default(now())
+  userId    String
   username  String
   privado   Boolean  @default(false)
   blocked   Boolean  @default(false)
