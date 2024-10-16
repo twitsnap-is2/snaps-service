@@ -1,0 +1,12 @@
+name: snaps-${ENV}
+
+services:
+  db:
+    image: postgres:13
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
+    ports:
+      - "${POSTGRES_PORT}:5432"
