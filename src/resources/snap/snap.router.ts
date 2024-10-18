@@ -2,6 +2,7 @@ import { SnapService } from "./snap.service.js";
 import { z } from "@hono/zod-openapi";
 import { openAPI } from "../../utils/open-api.js";
 import { CustomError, errorSchema } from "../../utils/error.js";
+import { ssgParams } from "hono/ssg";
 
 export const snapRouter = openAPI.router();
 
@@ -114,8 +115,9 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
           z.object({
             path: z.string(),
             mimeType: z.string(),
-          })
+          }),
         ),
+        likes: z.array(z.string()),
       }),
     },
     400: {
@@ -247,6 +249,114 @@ snapRouter.openapi(editSnapOpenAPI, async (c) => {
 
   const response = await snapService.edit(params.id, body.content, body.private, body.medias ?? []);
 
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json(response, 200);
+});
+
+const likeSnapOpenAPI = openAPI.route("PUT", "/{id}/like", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    username: z.string(),
+  }),
+  responses: {
+    200: {
+      description: "Like a snap",
+      schema: z.object({
+        id: z.string(),
+      }),
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  },
+});
+
+snapRouter.openapi(likeSnapOpenAPI, async (c) => {
+  const body = c.req.valid("json");
+  const params = c.req.valid("param");
+
+  const response = await snapService.updateLikeValue(true, params.id, body.username);
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json(response, 200);
+});
+
+const dislikeSnapOpenAPI = openAPI.route("PUT", "/{id}/dislike", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    username: z.string(),
+  }),
+  responses: {
+    200: {
+      description: "Dislike a snap",
+      schema: z.object({
+        id: z.string(),
+      }),
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  },
+});
+
+snapRouter.openapi(dislikeSnapOpenAPI, async (c) => {
+  const body = c.req.valid("json");
+  const params = c.req.valid("param");
+
+
+  const response = await snapService.updateLikeValue(false, params.id, body.username);
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json(response, 200);
+});
+
+const getLikesOpenAPI = openAPI.route("GET", "/{id}/likes", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  responses: {
+    200: {
+      description: "Get likes of a snap",
+      schema: z.array(z.string()),
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  },
+});
+
+snapRouter.openapi(getLikesOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+  const response = await snapService.getLikes(params.id);
   if (!response) {
     throw new CustomError({
       title: "Snap not found",

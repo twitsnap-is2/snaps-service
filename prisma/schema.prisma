@@ -18,6 +18,7 @@ model Snap {
   hashtags  String[]
   mentions  String[]
   medias    Media[]
+  likes     String[]
 }
 
 model Media {

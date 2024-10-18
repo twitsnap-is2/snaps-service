@@ -33,6 +33,7 @@ export class SnapService {
             })),
           },
         },
+        likes: [],
       },
       include: {
         medias: true,
@@ -150,5 +151,47 @@ export class SnapService {
         detail: "Snap not found",
       });
     }
+  }
+
+  async updateLikeValue(shouldAdd: boolean, id: string, username: string) {
+    const snap = await this.get(id);
+    if (!snap) {
+      throw new CustomError({
+        title: "Snap not found",
+        status: 400,
+        detail: "Snap not found",
+      });
+    }
+    const likes = snap.likes;
+
+    try {
+      return await db.snap.update({
+        select: { id: true },
+        where: { id: id },
+        data: {
+          likes: shouldAdd
+            ? { push: username }
+            : { set: likes.filter((username_aux) => username_aux !== username) },
+        },
+      });
+    } catch (error) {
+      throw new CustomError({
+        title: "Snap not found",
+        status: 400,
+        detail: "Snap not found",
+      });
+    }
+  }
+
+  async getLikes(id: string) {
+    const snap = await this.get(id);
+    if (!snap) {
+      throw new CustomError({
+        title: "Snap not found",
+        status: 400,
+        detail: "Snap not found",
+      });
+    }
+    return snap.likes;
   }
 }
