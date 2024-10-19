@@ -1,16 +1,38 @@
 import { describe, expect, test } from "vitest";
 import { app } from "../../index.js";
-import { assert } from "console";
-import { z } from "zod";
-import { snapSchema } from "./snap.router.js";
 
-const getAllSchema = z.object({ data: snapSchema.array() });
+import { execSync } from "child_process";
+import { afterAll, beforeAll } from "vitest";
+import { db } from "../../utils/db.js";
+
+beforeAll(async () => {
+  execSync("npx prisma migrate reset --force");
+  await db.snap.create({
+    data: {
+      userId: "1",
+      username: "User 1",
+      content: "Snap 1",
+    },
+  });
+  await db.snap.create({
+    data: {
+      userId: "2",
+      username: "User 2",
+      content: "Snap 2",
+    },
+  });
+});
+
+afterAll(async () => {
+  await db.snap.deleteMany();
+});
 
 describe("GET /snaps/", () => {
   test("Get snaps correctly", async () => {
     const res = await app.request("/snaps");
     expect(res.status).toBe(200);
     const body = await res.json();
+    console.log(body);
     expect(body[0].username).toBe("User 2");
     expect(body[0].content).toBe("Snap 2");
     expect(body[1].username).toBe("User 1");
