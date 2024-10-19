@@ -25,7 +25,7 @@ jobs:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
     env:
-      DATABASE_URL: postgresql://user:password@localhost:5433/snaps_db_test?schema=public
+      DATABASE_URL: postgresql://user:password@localhost:5633/snaps_db_test?schema=public
 
     steps:
       - uses: actions/checkout@v4
