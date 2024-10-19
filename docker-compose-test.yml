@@ -6,7 +6,7 @@ services:
     image: postgres:13
     restart: always
     env_file:
-      - .env
+      - .env.test
     environment:
       - TZ=America/Argentina/Buenos_Aires
     ports:
