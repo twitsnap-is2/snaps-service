@@ -13,8 +13,10 @@ export class SnapService {
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].trim().charAt(0) === "#" && hashtags.push(words[i].trim().toLowerCase());
-      words[i].trim().charAt(0) === "@" && mentions.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "#" &&
+        hashtags.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "@" &&
+        mentions.push(words[i].trim().toLowerCase());
     }
 
     const snap = await db.snap.create({
@@ -24,7 +26,7 @@ export class SnapService {
         content: data.content,
         hashtags: hashtags,
         mentions: mentions,
-        privado: data.private,
+        private: data.private,
         medias: {
           createMany: {
             data: data.medias.map((media) => ({
@@ -56,8 +58,12 @@ export class SnapService {
       take: filters.limit ?? 20,
       where: {
         username: { equals: filters.username, mode: "insensitive" },
-        hashtags: filters.hashtag ? { has: filters.hashtag.toLowerCase() } : undefined,
-        content: filters.content ? { contains: filters.content, mode: "insensitive" } : undefined,
+        hashtags: filters.hashtag
+          ? { has: filters.hashtag.toLowerCase() }
+          : undefined,
+        content: filters.content
+          ? { contains: filters.content, mode: "insensitive" }
+          : undefined,
         createdAt: {
           gt: filters.dateFrom,
           lt: filters.dateTo,
@@ -118,13 +124,20 @@ export class SnapService {
     }
   }
 
-  async edit(id: string, content: string, privado: boolean, medias: { path: string; mimeType: string }[]) {
+  async edit(
+    id: string,
+    content: string,
+    privado: boolean,
+    medias: { path: string; mimeType: string }[]
+  ) {
     const words = content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].trim().charAt(0) === "#" && hashtags.push(words[i].trim().toLowerCase());
-      words[i].trim().charAt(0) === "@" && mentions.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "#" &&
+        hashtags.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "@" &&
+        mentions.push(words[i].trim().toLowerCase());
     }
 
     try {
@@ -135,7 +148,7 @@ export class SnapService {
           content: content,
           hashtags: hashtags,
           mentions: mentions,
-          privado: privado,
+          private: privado,
           medias: {
             deleteMany: {},
             createMany: {
@@ -171,7 +184,9 @@ export class SnapService {
         data: {
           likes: shouldAdd
             ? { push: username }
-            : { set: likes.filter((username_aux) => username_aux !== username) },
+            : {
+                set: likes.filter((username_aux) => username_aux !== username),
+              },
         },
       });
     } catch (error) {

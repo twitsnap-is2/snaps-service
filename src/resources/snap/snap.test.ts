@@ -26,8 +26,10 @@ describe("POST /snap", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        userId: "1",
         username: "Messi",
-        content: "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
+        content:
+          "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
         private: false,
         medias: [],
       }),
@@ -35,12 +37,15 @@ describe("POST /snap", () => {
     expect(res.status).toBe(201);
 
     const body = await res.json();
+    expect(body.userId).toBe("1");
     expect(body.username).toBe("Messi");
-    expect(body.content).toBe("Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona");
+    expect(body.content).toBe(
+      "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona"
+    );
     expect(body.mentions).toEqual(["@neymarjr"]);
     expect(body.hashtags).toEqual(["#barcelona"]);
     expect(body.medias).toEqual([]);
-    expect(body.privado).toBe(false);
+    expect(body.private).toBe(false);
   });
 
   test("POST /snap no content", async () => {
@@ -50,6 +55,7 @@ describe("POST /snap", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        userId: "1",
         username: "User 1",
       }),
     });
@@ -72,6 +78,7 @@ medias: Required`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        userId: "1",
         username: "User 1",
         content: "",
         private: false,
@@ -93,6 +100,7 @@ medias: Required`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        userId: "1",
         username: "User 1",
         content: "a".repeat(281),
         private: false,
@@ -118,6 +126,7 @@ describe("GET /snaps/:id", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        userId: "1",
         username: "User 1",
         content: "Snap 1",
         private: false,
@@ -134,13 +143,109 @@ describe("GET /snaps/:id", () => {
     expect(bodyGetSnap.mentions).toEqual([]);
     expect(bodyGetSnap.hashtags).toEqual([]);
     expect(bodyGetSnap.medias).toEqual([]);
-    expect(bodyGetSnap.privado).toBe(false);
+    expect(bodyGetSnap.private).toBe(false);
   });
 
   test("Get snap not found", async () => {
     const res = await app.request(`/snaps/1234`);
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({
+      type: "about:blank",
+      title: "Snap not found",
+      detail: "Snap not found",
+      instance: "/snaps/1234",
+      status: 400,
+    });
+  });
+});
+
+describe("DELETE /snaps/:id", () => {
+  test("Delete snap correctly", async () => {
+    const res = await app.request("/snaps", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: "1",
+        username: "User 1",
+        content: "Snap 1",
+        private: false,
+        medias: [],
+      }),
+    });
+    const body = await res.json();
+
+    const resDeleteSnap = await app.request(`/snaps/${body.id}`, {
+      method: "DELETE",
+    });
+    expect(resDeleteSnap.status).toBe(200);
+    expect(await resDeleteSnap.json()).toEqual({ id: body.id });
+  });
+
+  test("Delete snap not found", async () => {
+    const res = await app.request(`/snaps/1234`, {
+      method: "DELETE",
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      type: "about:blank",
+      title: "Snap not found",
+      detail: "Snap not found",
+      instance: "/snaps/1234",
+      status: 400,
+    });
+  });
+});
+
+describe("PUT /snaps/:id", () => {
+  test("Update snap correctly", async () => {
+    const res = await app.request("/snaps", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: "1",
+        username: "User 1",
+        content: "Snap 1",
+        private: false,
+        medias: [],
+      }),
+    });
+    const body = await res.json();
+
+    const resUpdateSnap = await app.request(`/snaps/${body.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        content: "Snap 1 updated",
+        private: true,
+      }),
+    });
+    expect(resUpdateSnap.status).toBe(200);
+
+    const resGetSnap = await app.request(`/snaps/${body.id}`);
+    const bodyGetSnap = await resGetSnap.json();
+    expect(bodyGetSnap.username).toBe("User 1");
+    expect(bodyGetSnap.content).toBe("Snap 1 updated");
+  });
+
+  test("Update snap not found", async () => {
+    const resUpdateSnap = await app.request(`/snaps/1234`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        content: "Snap 1 updated",
+        private: true,
+      }),
+    });
+    expect(resUpdateSnap.status).toBe(400);
+    expect(await resUpdateSnap.json()).toEqual({
       type: "about:blank",
       title: "Snap not found",
       detail: "Snap not found",

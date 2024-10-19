@@ -14,7 +14,7 @@ export const snapSchema = z.object({
   username: z.string(),
   content: z.string(),
   createdAt: z.string(),
-  privado: z.boolean(),
+  private: z.boolean(),
   blocked: z.boolean(),
   hashtags: z.array(z.string()),
   mentions: z.array(z.string()),
@@ -107,7 +107,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
         username: z.string(),
         content: z.string(),
         createdAt: z.string(),
-        privado: z.boolean(),
+        private: z.boolean(),
         blocked: z.boolean(),
         hashtags: z.array(z.string()),
         mentions: z.array(z.string()),
@@ -115,7 +115,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
           z.object({
             path: z.string(),
             mimeType: z.string(),
-          }),
+          })
         ),
         likes: z.array(z.string()),
       }),
@@ -247,7 +247,12 @@ snapRouter.openapi(editSnapOpenAPI, async (c) => {
 
   const body = c.req.valid("json");
 
-  const response = await snapService.edit(params.id, body.content, body.private, body.medias ?? []);
+  const response = await snapService.edit(
+    params.id,
+    body.content,
+    body.private,
+    body.medias ?? []
+  );
 
   if (!response) {
     throw new CustomError({
@@ -286,7 +291,11 @@ snapRouter.openapi(likeSnapOpenAPI, async (c) => {
   const body = c.req.valid("json");
   const params = c.req.valid("param");
 
-  const response = await snapService.updateLikeValue(true, params.id, body.username);
+  const response = await snapService.updateLikeValue(
+    true,
+    params.id,
+    body.username
+  );
   if (!response) {
     throw new CustomError({
       title: "Snap not found",
@@ -324,8 +333,11 @@ snapRouter.openapi(dislikeSnapOpenAPI, async (c) => {
   const body = c.req.valid("json");
   const params = c.req.valid("param");
 
-
-  const response = await snapService.updateLikeValue(false, params.id, body.username);
+  const response = await snapService.updateLikeValue(
+    false,
+    params.id,
+    body.username
+  );
   if (!response) {
     throw new CustomError({
       title: "Snap not found",

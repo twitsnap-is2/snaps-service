@@ -13,7 +13,7 @@ model Snap {
   createdAt DateTime @default(now())
   userId    String
   username  String
-  privado   Boolean  @default(false)
+  private   Boolean  @default(false)
   blocked   Boolean  @default(false)
   hashtags  String[]
   mentions  String[]
