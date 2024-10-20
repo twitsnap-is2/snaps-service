@@ -50,9 +50,8 @@ describe("POST /snap", () => {
       body: JSON.stringify({
         userId: "1",
         username: "Messi",
-        content:
-          "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
-        private: false,
+        content: "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
+        isPrivate: false,
         medias: [],
       }),
     });
@@ -61,13 +60,11 @@ describe("POST /snap", () => {
     const body = await res.json();
     expect(body.userId).toBe("1");
     expect(body.username).toBe("Messi");
-    expect(body.content).toBe(
-      "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona"
-    );
+    expect(body.content).toBe("Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona");
     expect(body.mentions).toEqual(["@neymarjr"]);
     expect(body.hashtags).toEqual(["#barcelona"]);
     expect(body.medias).toEqual([]);
-    expect(body.private).toBe(false);
+    expect(body.isPrivate).toBe(false);
   });
 
   test("POST /snap no content", async () => {
@@ -86,7 +83,7 @@ describe("POST /snap", () => {
       type: "about:blank",
       title: "Invalid request POST /snaps",
       detail: `content: Required,
-private: Required,
+isPrivate: Required,
 medias: Required`,
       instance: "/snaps",
       status: 400,
@@ -103,7 +100,7 @@ medias: Required`,
         userId: "1",
         username: "User 1",
         content: "",
-        private: false,
+        isPrivate: false,
         medias: [],
       }),
     });
@@ -125,7 +122,7 @@ medias: Required`,
         userId: "1",
         username: "User 1",
         content: "a".repeat(281),
-        private: false,
+        isPrivate: false,
         medias: [],
       }),
     });
@@ -151,7 +148,7 @@ describe("GET /snaps/:id", () => {
         userId: "1",
         username: "User 1",
         content: "Snap 1",
-        private: false,
+        isPrivate: false,
         medias: [],
       }),
     });
@@ -165,7 +162,7 @@ describe("GET /snaps/:id", () => {
     expect(bodyGetSnap.mentions).toEqual([]);
     expect(bodyGetSnap.hashtags).toEqual([]);
     expect(bodyGetSnap.medias).toEqual([]);
-    expect(bodyGetSnap.private).toBe(false);
+    expect(bodyGetSnap.isPrivate).toBe(false);
   });
 
   test("Get snap not found", async () => {
@@ -192,7 +189,7 @@ describe("DELETE /snaps/:id", () => {
         userId: "1",
         username: "User 1",
         content: "Snap 1",
-        private: false,
+        isPrivate: false,
         medias: [],
       }),
     });
@@ -231,7 +228,7 @@ describe("PUT /snaps/:id", () => {
         userId: "1",
         username: "User 1",
         content: "Snap 1",
-        private: false,
+        isPrivate: false,
         medias: [],
       }),
     });
@@ -244,7 +241,7 @@ describe("PUT /snaps/:id", () => {
       },
       body: JSON.stringify({
         content: "Snap 1 updated",
-        private: true,
+        isPrivate: true,
       }),
     });
     expect(resUpdateSnap.status).toBe(200);
@@ -263,7 +260,7 @@ describe("PUT /snaps/:id", () => {
       },
       body: JSON.stringify({
         content: "Snap 1 updated",
-        private: true,
+        isPrivate: true,
       }),
     });
     expect(resUpdateSnap.status).toBe(400);
