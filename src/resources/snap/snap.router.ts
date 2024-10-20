@@ -2,7 +2,6 @@ import { SnapService } from "./snap.service.js";
 import { z } from "@hono/zod-openapi";
 import { openAPI } from "../../utils/open-api.js";
 import { CustomError, errorSchema } from "../../utils/error.js";
-import { ssgParams } from "hono/ssg";
 
 export const snapRouter = openAPI.router();
 
@@ -14,10 +13,11 @@ export const snapSchema = z.object({
   username: z.string(),
   content: z.string(),
   createdAt: z.string(),
-  private: z.boolean(),
-  blocked: z.boolean(),
+  isPrivate: z.boolean(),
+  isBlocked: z.boolean(),
   hashtags: z.array(z.string()),
   mentions: z.array(z.string()),
+  likes: z.array(z.string()),
   medias: z.array(
     z.object({
       path: z.string(),
@@ -90,7 +90,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
       .string()
       .max(280, "Content too long, should be less than 280 characters")
       .min(1, "You must provide the content for the snap"),
-    private: z.boolean(),
+    isPrivate: z.boolean(),
     medias: z.array(
       z.object({
         path: z.string(),
@@ -101,24 +101,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
   responses: {
     201: {
       description: "Snap created",
-      schema: z.object({
-        id: z.string(),
-        userId: z.string(),
-        username: z.string(),
-        content: z.string(),
-        createdAt: z.string(),
-        private: z.boolean(),
-        blocked: z.boolean(),
-        hashtags: z.array(z.string()),
-        mentions: z.array(z.string()),
-        medias: z.array(
-          z.object({
-            path: z.string(),
-            mimeType: z.string(),
-          })
-        ),
-        likes: z.array(z.string()),
-      }),
+      schema: snapSchema,
     },
     400: {
       description: "Invalid request POST /snaps",
@@ -218,7 +201,7 @@ const editSnapOpenAPI = openAPI.route("PUT", "/{id}", {
       .string()
       .max(280, "Content too long, should be less than 280 characters")
       .min(1, "You must provide the content for the snap"),
-    private: z.boolean(),
+    isPrivate: z.boolean(),
     medias: z
       .array(
         z.object({
@@ -247,12 +230,7 @@ snapRouter.openapi(editSnapOpenAPI, async (c) => {
 
   const body = c.req.valid("json");
 
-  const response = await snapService.edit(
-    params.id,
-    body.content,
-    body.private,
-    body.medias ?? []
-  );
+  const response = await snapService.edit(params.id, body.content, body.isPrivate, body.medias ?? []);
 
   if (!response) {
     throw new CustomError({
@@ -291,11 +269,7 @@ snapRouter.openapi(likeSnapOpenAPI, async (c) => {
   const body = c.req.valid("json");
   const params = c.req.valid("param");
 
-  const response = await snapService.updateLikeValue(
-    true,
-    params.id,
-    body.username
-  );
+  const response = await snapService.updateLikeValue(true, params.id, body.username);
   if (!response) {
     throw new CustomError({
       title: "Snap not found",
@@ -333,11 +307,7 @@ snapRouter.openapi(dislikeSnapOpenAPI, async (c) => {
   const body = c.req.valid("json");
   const params = c.req.valid("param");
 
-  const response = await snapService.updateLikeValue(
-    false,
-    params.id,
-    body.username
-  );
+  const response = await snapService.updateLikeValue(false, params.id, body.username);
   if (!response) {
     throw new CustomError({
       title: "Snap not found",
