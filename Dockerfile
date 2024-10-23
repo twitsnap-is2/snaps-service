@@ -6,7 +6,7 @@ COPY . .
 RUN npm i 
 RUN npm run build
 
-RUN npx prisma generate
+RUN npx prisma db push
 
 FROM node:lts-alpine
 
@@ -17,8 +17,6 @@ COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/node_modules /app/node_modules
 
 COPY --from=builder /app/package.json /app/package.json
-
-# COPY --from=builder /app/prisma /app/prisma
 
 # EXPOSE 4003
 CMD ["npm", "run", "start"]
