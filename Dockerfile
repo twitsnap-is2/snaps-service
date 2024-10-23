@@ -6,7 +6,9 @@ COPY . .
 RUN npm i 
 RUN npm run build
 
-RUN npx prisma migrate dev
+ARG DATABASE_URL
+
+RUN npx prisma db push
 
 FROM node:lts-alpine
 
