@@ -1,4 +1,5 @@
 # Twitsnap's snaps service
+![workflow](https://github.com/twitsnap-is2/snaps-service/actions/workflows/test.yml/badge.svg)
 
 ![Twitsnap Logo](./logo.png)
 
@@ -85,6 +86,3 @@ To run the tests with coverage and see it displayed in the browser, use the foll
 npm run test:ui
 ```
 
-## Workflow status badge
-
-![workflow](https://github.com/twitsnap-is2/snaps-service/actions/workflows/test.yml/badge.svg)
