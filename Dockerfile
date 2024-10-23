@@ -3,7 +3,8 @@ FROM node:lts-alpine AS builder
 WORKDIR /app
 
 COPY . .
-RUN npm i && npm run build
+RUN npm i 
+RUN npm run build
 
 RUN npx prisma generate
 

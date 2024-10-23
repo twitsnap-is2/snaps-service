@@ -172,7 +172,7 @@ export class SnapService {
           likes: shouldAdd
             ? { push: username }
             : {
-                set: likes.filter((username_aux) => username_aux !== username),
+                set: likes.filter((u: string) => u !== username),
               },
         },
       });
