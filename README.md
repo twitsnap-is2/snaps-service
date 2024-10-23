@@ -38,9 +38,18 @@ To run the project using npm, follow these steps:
 
 ## OpenAPI documentation
 
-Our API Gateway is fully documented using the OpenAPI standard. You can explore the API's functionality and available endpoints via Swagger UI at the following URL: `http://localhost:<port>/swagger`
+Our API Gateway is fully documented using the OpenAPI standard. You can explore the API's functionality and available endpoints via Swagger UI at the following URL: 
+
+### Development
+
+`http://localhost:<port>/swagger`
 
 _Make sure to replace `<port>` with the port number specified in your .env configuration file._
+
+### Production
+
+`https://twitsnap-snaps-service.up.railway.app/swagger`
+
 
 ## Technologies
 
