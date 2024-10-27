@@ -18,7 +18,14 @@ model Snap {
   hashtags  String[]
   mentions  String[]
   medias    Media[]
-  likes     String[]
+  likes     Likes[]
+}
+
+model Likes {
+  id     String @id @default(uuid())
+  userId String
+  snapId String
+  snap   Snap   @relation(fields: [snapId], references: [id])
 }
 
 model Media {

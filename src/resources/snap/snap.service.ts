@@ -1,3 +1,4 @@
+import { use } from "hono/jsx";
 import { db } from "../../utils/db.js";
 import { CustomError } from "../../utils/error.js";
 
@@ -13,8 +14,10 @@ export class SnapService {
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].trim().charAt(0) === "#" && hashtags.push(words[i].trim().toLowerCase());
-      words[i].trim().charAt(0) === "@" && mentions.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "#" &&
+        hashtags.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "@" &&
+        mentions.push(words[i].trim().toLowerCase());
     }
 
     const snap = await db.snap.create({
@@ -33,31 +36,44 @@ export class SnapService {
             })),
           },
         },
-        likes: [],
       },
       include: {
         medias: true,
       },
     });
 
-    return snap;
+    return { ...snap, likes: 0 };
   }
 
-  async getSnaps(filters: {
-    username?: string;
-    hashtag?: string;
-    content?: string;
-    dateFrom?: Date;
-    dateTo?: Date;
-    limit?: number;
-  }) {
+  async getSnaps(
+    filters: {
+      username?: string;
+      hashtag?: string;
+      content?: string;
+      dateFrom?: Date;
+      dateTo?: Date;
+      limit?: number;
+    },
+    requestingUserId?: string
+  ) {
     const snaps = await db.snap.findMany({
-      include: { medias: true },
+      include: {
+        medias: true,
+        _count: { select: { likes: true } },
+        likes: {
+          select: { userId: true },
+          where: { userId: requestingUserId ?? "__no_user__" },
+        },
+      },
       take: filters.limit ?? 20,
       where: {
         username: { equals: filters.username, mode: "insensitive" },
-        hashtags: filters.hashtag ? { has: filters.hashtag.toLowerCase() } : undefined,
-        content: filters.content ? { contains: filters.content, mode: "insensitive" } : undefined,
+        hashtags: filters.hashtag
+          ? { has: filters.hashtag.toLowerCase() }
+          : undefined,
+        content: filters.content
+          ? { contains: filters.content, mode: "insensitive" }
+          : undefined,
         createdAt: {
           gt: filters.dateFrom,
           lt: filters.dateTo,
@@ -65,15 +81,35 @@ export class SnapService {
       },
       orderBy: { createdAt: "desc" },
     });
-    return snaps;
+    return snaps.map(({ _count, likes, ...snap }) => ({
+      ...snap,
+      likes: _count.likes,
+      likedByUser: likes.length > 0,
+    }));
   }
 
-  async get(id: string) {
+  async get(id: string, requestingUserId?: string) {
     try {
-      return await db.snap.findUnique({
-        include: { medias: true },
+      const snap = await db.snap.findUnique({
+        include: {
+          medias: true,
+          _count: { select: { likes: true } },
+          likes: {
+            select: { userId: true },
+            where: { userId: requestingUserId ?? "__no_user__" },
+          },
+        },
         where: { id: id },
       });
+      if (!snap) {
+        return null;
+      }
+      const { _count, likes, ...snapData } = snap;
+      return {
+        ...snapData,
+        likes: _count.likes,
+        likedByUser: likes.length > 0,
+      };
     } catch (error) {
       throw new CustomError({
         title: "Snap not found",
@@ -118,13 +154,20 @@ export class SnapService {
     }
   }
 
-  async edit(id: string, content: string, isPrivate: boolean, medias: { path: string; mimeType: string }[]) {
+  async edit(
+    id: string,
+    content: string,
+    isPrivate: boolean,
+    medias: { path: string; mimeType: string }[]
+  ) {
     const words = content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].trim().charAt(0) === "#" && hashtags.push(words[i].trim().toLowerCase());
-      words[i].trim().charAt(0) === "@" && mentions.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "#" &&
+        hashtags.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "@" &&
+        mentions.push(words[i].trim().toLowerCase());
     }
 
     try {
@@ -153,47 +196,64 @@ export class SnapService {
     }
   }
 
-  async updateLikeValue(shouldAdd: boolean, id: string, username: string) {
-    const snap = await this.get(id);
-    if (!snap) {
-      throw new CustomError({
-        title: "Snap not found",
-        status: 400,
-        detail: "Snap not found",
-      });
-    }
-    const likes = snap.likes;
-
+  async updateLike(snapId: string, userId: string) {
     try {
-      return await db.snap.update({
-        select: { id: true },
-        where: { id: id },
-        data: {
-          likes: shouldAdd
-            ? { push: username }
-            : {
-                set: likes.filter((u: string) => u !== username),
-              },
-        },
+      const snap = await db.snap.findUnique({
+        where: { id: snapId },
+        include: { likes: true },
       });
+      if (!snap) {
+        throw new CustomError({
+          title: "Snap not found",
+          status: 400,
+          detail: "Snap not found",
+        });
+      }
+      const like = snap.likes.find((like) => like.userId === userId);
+      if (!like) {
+        return await db.likes.create({
+          data: {
+            snapId: snapId,
+            userId: userId,
+          },
+        });
+      }
+      return;
     } catch (error) {
       throw new CustomError({
-        title: "Snap not found",
-        status: 400,
-        detail: "Snap not found",
+        title: "Error updating likes",
+        status: 500,
+        detail: "Error updating likes",
       });
     }
   }
 
-  async getLikes(id: string) {
-    const snap = await this.get(id);
-    if (!snap) {
+  async updateDislike(snapId: string, userId: string) {
+    try {
+      const snap = await db.snap.findUnique({
+        where: { id: snapId },
+        include: { likes: true },
+      });
+      if (!snap) {
+        throw new CustomError({
+          title: "Snap not found",
+          status: 400,
+          detail: "Snap not found",
+        });
+      }
+      const like = snap.likes.find((like) => like.userId === userId);
+      if (like) {
+        return await db.likes.delete({
+          where: { id: like.id },
+        });
+      }
+      return;
+    } catch (error) {
       throw new CustomError({
-        title: "Snap not found",
-        status: 400,
-        detail: "Snap not found",
+        title: "Error updating likes",
+        status: 500,
+        detail: "Error updating likes",
       });
     }
-    return snap.likes;
   }
 }
