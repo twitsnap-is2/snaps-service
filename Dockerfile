@@ -2,12 +2,13 @@ FROM node:lts-alpine AS builder
 
 WORKDIR /app
 
+ARG DATABASE_URL
+
 COPY . .
 RUN npm i 
 RUN npx prisma db push
 RUN npm run build
 
-ARG DATABASE_URL
 
 
 FROM node:lts-alpine
