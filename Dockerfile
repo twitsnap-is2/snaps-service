@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY . .
 RUN npm i 
+RUN npx prisma db push
 RUN npm run build
 
 ARG DATABASE_URL
 
-RUN npx prisma db push
 
 FROM node:lts-alpine
 
