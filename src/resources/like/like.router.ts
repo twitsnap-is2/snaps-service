@@ -45,7 +45,7 @@ likeRouter.openapi(likeSnapOpenAPI, async (c) => {
   }
 });
 
-const dislikeSnapOpenAPI = openAPI.route("PUT", "/dislike/{snapId}", {
+const dislikeSnapOpenAPI = openAPI.route("DELETE", "/{snapId}", {
   group: "Like",
   params: z.object({
     snapId: z.string(),
