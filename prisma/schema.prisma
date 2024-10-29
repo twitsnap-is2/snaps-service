@@ -8,17 +8,20 @@ datasource db {
 }
 
 model Snap {
-  id        String   @id @default(uuid())
-  content   String
-  createdAt DateTime @default(now())
-  userId    String
-  username  String
-  isPrivate Boolean  @default(false)
-  isBlocked Boolean  @default(false)
-  hashtags  String[]
-  mentions  String[]
-  medias    Media[]
-  likes     Likes[]
+  id          String   @id @default(uuid())
+  content     String
+  createdAt   DateTime @default(now())
+  userId      String
+  username    String
+  isPrivate   Boolean  @default(false)
+  isBlocked   Boolean  @default(false)
+  hashtags    String[]
+  mentions    String[]
+  medias      Media[]
+  likes       Likes[] 
+  sharedId    String?  //  
+  sharedSnap  Snap?    @relation("SharedSnap", fields: [sharedId], references: [id])
+  sharedBy    Snap[]   @relation("SharedSnap") // Campo inverso para indicar quién compartió este snap
 }
 
 model Likes {

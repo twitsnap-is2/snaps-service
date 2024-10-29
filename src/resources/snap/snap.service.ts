@@ -28,6 +28,7 @@ export class SnapService {
         hashtags: hashtags,
         mentions: mentions,
         isPrivate: data.isPrivate,
+        sharedId: null,
         medias: {
           createMany: {
             data: data.medias.map((media) => ({
@@ -42,7 +43,7 @@ export class SnapService {
       },
     });
 
-    return { ...snap, likes: 0 };
+    return { ...snap, likes: 0, shares: 0};
   }
 
   async getSnaps(
@@ -58,8 +59,26 @@ export class SnapService {
   ) {
     const snaps = await db.snap.findMany({
       include: {
+        sharedSnap: {
+          include: {
+            medias: true,
+            _count: { select: { likes: true, sharedBy: true} },
+            sharedBy: {
+              select: { userId: true },
+              where: { userId: requestingUserId ?? "__no_user__" },
+            },
+            likes: {
+              select: { userId: true },
+              where: { userId: requestingUserId ?? "__no_user__" },
+            },
+          }
+        },
         medias: true,
-        _count: { select: { likes: true } },
+        _count: { select: { likes: true, sharedBy: true } },
+        sharedBy: {
+          select: { userId: true },
+          where: { userId: requestingUserId ?? "__no_user__" },
+        },
         likes: {
           select: { userId: true },
           where: { userId: requestingUserId ?? "__no_user__" },
@@ -81,19 +100,52 @@ export class SnapService {
       },
       orderBy: { createdAt: "desc" },
     });
-    return snaps.map(({ _count, likes, ...snap }) => ({
-      ...snap,
-      likes: _count.likes,
-      likedByUser: likes.length > 0,
-    }));
+    return snaps.map((snap) => {
+      const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
+      let formattedSharedSnap = null;
+      if (sharedSnap) {
+        const { _count: sharedSnapCount, likes: sharedSnapLikes, sharedBy: sharedSnapBy , ...sharedSnapData } = sharedSnap;
+        formattedSharedSnap = {
+          ...sharedSnapData,
+          likedByUser: sharedSnapLikes.length > 0,
+          likes: sharedSnapCount.likes,
+          shares: sharedSnapCount.sharedBy,
+          sharedByUser: sharedSnapBy.length > 0,
+        };
+      }
+      //console.log(formattedSharedSnap)
+    
+      return {
+        ...snapData,
+        likedByUser: likes.length > 0,
+        likes: _count.likes,
+        sharedSnap: formattedSharedSnap,
+        shares: _count.sharedBy,
+        sharedByUser: sharedBy.length > 0,
+      };
+    });
   }
 
   async get(id: string, requestingUserId?: string) {
     try {
       const snap = await db.snap.findUnique({
         include: {
+          sharedSnap: {
+            include: {
+              medias: true,
+              _count: { select: { likes: true, sharedBy: true} },
+              likes: {
+                select: { userId: true },
+                where: { userId: requestingUserId ?? "__no_user__" },
+              },
+            }
+          },
+          sharedBy: {
+            select: { userId: true },
+            where: { userId: requestingUserId ?? "__no_user__" },
+          },
           medias: true,
-          _count: { select: { likes: true } },
+          _count: { select: { likes: true, sharedBy: true} },
           likes: {
             select: { userId: true },
             where: { userId: requestingUserId ?? "__no_user__" },
@@ -104,12 +156,30 @@ export class SnapService {
       if (!snap) {
         return null;
       }
-      const { _count, likes, ...snapData } = snap;
-      return {
+      const { _count, likes, sharedBy, sharedSnap, ...snapData } = snap;
+
+      let formattedSharedSnap = null;
+      console.log(sharedSnap)
+      if (sharedSnap) {
+        const { _count: sharedSnapCount, likes: sharedSnapLikes, ...sharedSnapData } = sharedSnap;
+        formattedSharedSnap = {
+          ...sharedSnapData,
+          likedByUser: sharedSnapLikes.length > 0,
+          likes: sharedSnapCount.likes,
+          shares: _count.sharedBy,
+        };
+      }
+
+      const formattedSnap = {
         ...snapData,
-        likes: _count.likes,
         likedByUser: likes.length > 0,
+        likes: _count.likes,
+        sharedSnap: formattedSharedSnap,
+        shares: _count.sharedBy,
+        sharedByUser: sharedBy.length > 0,
       };
+
+      return formattedSnap;
     } catch (error) {
       throw new CustomError({
         title: "Snap not found",
@@ -186,6 +256,39 @@ export class SnapService {
             },
           },
         },
+      });
+    } catch (error) {
+      throw new CustomError({
+        title: "Snap not found",
+        status: 400,
+        detail: "Snap not found",
+      });
+    }
+  }
+
+  async share(id: string, userId: string, username: string) {
+    // Crear el nuevo snap sin include
+    const sharedSnap = await db.snap.create({
+      data: {
+        content: "", // vació para un "share"
+        userId: userId,
+        username: username,
+        hashtags: [],
+        mentions: [],
+        sharedId: id, // referencia al snap original
+      },
+    });
+  
+    return await this.get(sharedSnap.id);
+  }
+
+  async deleteShared(id: string, userId: string) {
+    try {
+      return await db.snap.deleteMany({
+        where: { 
+          userId: userId,
+          sharedSnap: { id: id }
+        }
       });
     } catch (error) {
       throw new CustomError({

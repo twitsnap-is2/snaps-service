@@ -8,7 +8,8 @@ export const snapRouter = openAPI.router();
 
 const snapService = new SnapService();
 
-export const snapSchema = z.object({
+// Define un esquema base para Snap sin la referencia recursiva
+export const baseSnapSchema = z.object({
   id: z.string(),
   userId: z.string(),
   username: z.string(),
@@ -20,12 +21,20 @@ export const snapSchema = z.object({
   mentions: z.array(z.string()),
   likes: z.number(),
   likedByUser: z.boolean().optional(),
+  sharedId: z.string().nullable(),
+  shares: z.number(),
+  sharedByUser: z.boolean().optional(),
   medias: z.array(
     z.object({
       path: z.string(),
       mimeType: z.string(),
     })
   ),
+});
+
+// Define el esquema completo incluyendo la referencia recursiva a baseSnapSchema
+export const snapSchema = baseSnapSchema.extend({
+  sharedSnap: baseSnapSchema.nullable(),
 });
 
 const getSnapsOpenAPI = openAPI.route("GET", "/", {
@@ -77,6 +86,7 @@ snapRouter.openapi(getOpenAPI, async (c) => {
   const params = c.req.valid("param");
   const query = c.req.valid("query");
   const response = await snapService.get(params.id, query.requestingUserId);
+  console.log(response);
   if (!response) {
     throw new CustomError({
       title: "Snap not found",
@@ -108,7 +118,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
   responses: {
     201: {
       description: "Snap created",
-      schema: snapSchema,
+      schema: baseSnapSchema,
     },
     400: {
       description: "Invalid request POST /snaps",
@@ -253,4 +263,82 @@ snapRouter.openapi(editSnapOpenAPI, async (c) => {
   }
 
   return c.json(response, 200);
+});
+
+const shareSnapOpenAPI = openAPI.route("POST", "/share/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    userId: z.string(),
+    username: z.string(),
+  }),
+  responses: {
+    201: {
+      description: "Share a snap",
+      schema: snapSchema,
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  },
+});
+
+snapRouter.openapi(shareSnapOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+  const body = c.req.valid("json");
+
+  const response = await snapService.share(params.id, body.userId, body.username);
+
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json(response, 201);
+});
+
+const deleteShareSnapOpenAPI = openAPI.route("DELETE", "/share/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    userId: z.string(),
+    username: z.string(),
+  }),
+  responses: {
+    200: {
+      description: "Delete a share",
+      schema: z.object({
+        id: z.string(),
+      }),
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  },
+});
+
+snapRouter.openapi(deleteShareSnapOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+  const body = c.req.valid("json");
+
+  const response = await snapService.deleteShared(params.id, body.userId);
+
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json({ id: params.id }, 200);
 });
