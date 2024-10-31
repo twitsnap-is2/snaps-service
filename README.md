@@ -14,6 +14,10 @@
 ## Introduction
 This repository contains the snaps service for the application, where each snap with it's media content is stored.
 
+## Production swaggers
+
+`https://twitsnap-snaps-service.up.railway.app/swagger`
+
 ## Run the project
 In order to run the project, you should not only run the server but also start the docker container for the database.
 
@@ -46,11 +50,6 @@ Our API Gateway is fully documented using the OpenAPI standard. You can explore 
 `http://localhost:<port>/swagger`
 
 _Make sure to replace `<port>` with the port number specified in your .env configuration file._
-
-### Production
-
-`https://twitsnap-snaps-service.up.railway.app/swagger`
-
 
 ## Technologies
 
