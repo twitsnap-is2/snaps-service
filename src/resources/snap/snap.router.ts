@@ -364,3 +364,22 @@ snapRouter.openapi(getSanpSharesOpenAPI, async (c) => {
   return c.json(response, 200);
 });
 
+
+snapRouter.openapi(openAPI.route("GET", "/likes/user/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  responses: {
+    200: {
+      description: "Get all likes",
+      schema: snapSchema.array(),
+    },
+  },
+}), async (c) => {
+  const params = c.req.valid("param");
+
+  const response = await snapService.getLikes(params.id);
+  console.log(response);
+  return c.json(response, 200);
+});
