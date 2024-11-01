@@ -2,7 +2,6 @@ import { SnapService } from "./snap.service.js";
 import { z } from "@hono/zod-openapi";
 import { openAPI } from "../../utils/open-api.js";
 import { CustomError, errorSchema } from "../../utils/error.js";
-import { id } from "date-fns/locale";
 
 export const snapRouter = openAPI.router();
 
@@ -342,3 +341,26 @@ snapRouter.openapi(deleteShareSnapOpenAPI, async (c) => {
 
   return c.json({ id: params.id }, 200);
 });
+
+
+const getSanpSharesOpenAPI = openAPI.route("GET", "/shares/user/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  responses: {
+    200: {
+      description: "Get all shares",
+      schema: snapSchema.array(),
+    },
+  },
+}); 
+
+snapRouter.openapi(getSanpSharesOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+
+  const response = await snapService.getShares(params.id);
+  console.log(response);
+  return c.json(response, 200);
+});
+
