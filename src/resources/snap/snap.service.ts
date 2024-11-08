@@ -1,6 +1,7 @@
 import { use } from "hono/jsx";
 import { db } from "../../utils/db.js";
 import { CustomError } from "../../utils/error.js";
+import { get } from "http";
 
 export class SnapService {
   async create(data: {
@@ -9,7 +10,7 @@ export class SnapService {
     content: string;
     isPrivate: boolean;
     medias: { path: string; mimeType: string }[];
-  }) {
+  }, parentId?: string) {
     const words = data.content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
     let hashtags = [];
     let mentions = [];
@@ -29,6 +30,7 @@ export class SnapService {
         mentions: mentions,
         isPrivate: data.isPrivate,
         sharedId: null,
+        parentId: parentId ?? null,
         medias: {
           createMany: {
             data: data.medias.map((media) => ({
@@ -43,7 +45,7 @@ export class SnapService {
       },
     });
 
-    return { ...snap, likes: 0, shares: 0};
+    return { ...snap, likes: 0, shares: 0, comments: 0};
   }
 
   async getSnaps(
@@ -100,21 +102,23 @@ export class SnapService {
       },
       orderBy: { createdAt: "desc" },
     });
-    return snaps.map((snap) => {
+    return await Promise.all(snaps.map(async (snap) => {
       const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
       let formattedSharedSnap = null;
       if (sharedSnap) {
         const { _count: sharedSnapCount, likes: sharedSnapLikes, sharedBy: sharedSnapBy , ...sharedSnapData } = sharedSnap;
+        const comments = await this.getComments(sharedSnapData.id);
         formattedSharedSnap = {
           ...sharedSnapData,
           likedByUser: sharedSnapLikes.length > 0,
           likes: sharedSnapCount.likes,
           shares: sharedSnapCount.sharedBy,
           sharedByUser: sharedSnapBy.length > 0,
+          comments: comments,
         };
       }
       //console.log(formattedSharedSnap)
-    
+      const comments = await this.getComments(snapData.id);
       return {
         ...snapData,
         likedByUser: likes.length > 0,
@@ -122,8 +126,9 @@ export class SnapService {
         sharedSnap: formattedSharedSnap,
         shares: _count.sharedBy,
         sharedByUser: sharedBy.length > 0,
+        comments: comments,
       };
-    });
+    }));
   }
 
   async get(id: string, requestingUserId?: string) {
@@ -159,7 +164,6 @@ export class SnapService {
       const { _count, likes, sharedBy, sharedSnap, ...snapData } = snap;
 
       let formattedSharedSnap = null;
-      console.log(sharedSnap)
       if (sharedSnap) {
         const { _count: sharedSnapCount, likes: sharedSnapLikes, ...sharedSnapData } = sharedSnap;
         formattedSharedSnap = {
@@ -167,6 +171,7 @@ export class SnapService {
           likedByUser: sharedSnapLikes.length > 0,
           likes: sharedSnapCount.likes,
           shares: _count.sharedBy,
+          comments: await this.getComments(sharedSnapData.id),
         };
       }
 
@@ -177,6 +182,7 @@ export class SnapService {
         sharedSnap: formattedSharedSnap,
         shares: _count.sharedBy,
         sharedByUser: sharedBy.length > 0,
+        comments: await this.getComments(snapData.id),
       };
 
       return formattedSnap;
@@ -334,20 +340,23 @@ export class SnapService {
       orderBy: { createdAt: "desc" }
     });
 
-    return snapShare.map((snap) => {
+    return await Promise.all(snapShare.map(async (snap) => {
       const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
       let formattedSharedSnap = null;
       if (sharedSnap) {
         const { _count: sharedSnapCount, likes: sharedSnapLikes, sharedBy: sharedSnapBy , ...sharedSnapData } = sharedSnap;
+        const comments = await this.getComments(sharedSnapData.id);
         formattedSharedSnap = {
           ...sharedSnapData,
           likedByUser: sharedSnapLikes.length > 0,
           likes: sharedSnapCount.likes,
           shares: sharedSnapCount.sharedBy,
           sharedByUser: sharedSnapBy.length > 0,
+          comments: comments,
         };
       }
 
+      const comments = await this.getComments(snapData.id);
       return {
         ...snapData,
         likedByUser: likes.length > 0,
@@ -355,8 +364,9 @@ export class SnapService {
         sharedSnap: formattedSharedSnap,
         shares: _count.sharedBy,
         sharedByUser: sharedBy.length > 0,
+        comments: comments,
       };
-    });
+    }));
   }
 
   async getLikes(id: string) {
@@ -393,20 +403,23 @@ export class SnapService {
       orderBy: { createdAt: "desc" }
     });
 
-    return snapLikes.map((snap) => {
+    return await Promise.all(snapLikes.map(async (snap) => {
       const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
       let formattedSharedSnap = null;
       if (sharedSnap) {
         const { _count: sharedSnapCount, likes: sharedSnapLikes, sharedBy: sharedSnapBy , ...sharedSnapData } = sharedSnap;
+        const comments = await this.getComments(sharedSnapData.id);
         formattedSharedSnap = {
           ...sharedSnapData,
           likedByUser: sharedSnapLikes.length > 0,
           likes: sharedSnapCount.likes,
           shares: sharedSnapCount.sharedBy,
           sharedByUser: sharedSnapBy.length > 0,
+          comments: comments,
         };
       }
 
+      const comments = await this.getComments(snapData.id);
       return {
         ...snapData,
         likedByUser: likes.length > 0,
@@ -414,7 +427,16 @@ export class SnapService {
         sharedSnap: formattedSharedSnap,
         shares: _count.sharedBy,
         sharedByUser: sharedBy.length > 0,
+        comments: comments,
       };
-    });
+    }));
   } 
+
+  async getComments(id: string) {
+    const result = await db.snap.count({
+      where: { parentId: id },
+    });
+    return result;
+  }
+
 }

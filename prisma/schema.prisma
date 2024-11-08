@@ -22,6 +22,7 @@ model Snap {
   sharedId    String?  //  
   sharedSnap  Snap?    @relation("SharedSnap", fields: [sharedId], references: [id])
   sharedBy    Snap[]   @relation("SharedSnap") // Campo inverso para indicar quién compartió este snap
+  parentId    String? // En caso de que sea una respuesta a otro snap
 }
 
 model Likes {

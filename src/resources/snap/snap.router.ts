@@ -19,8 +19,10 @@ export const baseSnapSchema = z.object({
   hashtags: z.array(z.string()),
   mentions: z.array(z.string()),
   likes: z.number(),
+  comments: z.number(),
   likedByUser: z.boolean().optional(),
   sharedId: z.string().nullable(),
+  parentId: z.string().nullable(),
   shares: z.number(),
   sharedByUser: z.boolean().optional(),
   medias: z.array(
@@ -342,7 +344,6 @@ snapRouter.openapi(deleteShareSnapOpenAPI, async (c) => {
   return c.json({ id: params.id }, 200);
 });
 
-
 const getSanpSharesOpenAPI = openAPI.route("GET", "/shares/user/{id}", {
   group: "Snap",
   params: z.object({
@@ -364,7 +365,6 @@ snapRouter.openapi(getSanpSharesOpenAPI, async (c) => {
   return c.json(response, 200);
 });
 
-
 snapRouter.openapi(openAPI.route("GET", "/likes/user/{id}", {
   group: "Snap",
   params: z.object({
@@ -382,4 +382,53 @@ snapRouter.openapi(openAPI.route("GET", "/likes/user/{id}", {
   const response = await snapService.getLikes(params.id);
   console.log(response);
   return c.json(response, 200);
+});
+
+const answerSnapOpenAPI = openAPI.route("POST", "/answer/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    userId: z.string(),
+    username: z.string(),
+    content: z
+      .string()
+      .max(280, "Content too long, should be less than 280 characters")
+      .min(1, "You must provide the content for the snap"),
+    isPrivate: z.boolean(),
+    medias: z.array(
+      z.object({
+        path: z.string(),
+        mimeType: z.string(),
+      })
+    ),
+  }),
+  responses: {
+    201: {
+      description: "Answer created",
+      schema: baseSnapSchema,
+    },
+    400: {
+      description: "Invalid request POST /snaps",
+      schema: errorSchema,
+    },
+  },
+}); 
+
+snapRouter.openapi(answerSnapOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+  const body = c.req.valid("json");
+
+  const response = await snapService.create(body, params.id);
+
+  if (!response) {
+    throw new CustomError({
+      title: "Invalid request POST /snaps",
+      status: 400,
+      detail: "Invalid request POST /snaps",
+    });
+  }
+
+  return c.json(response, 201);
 });
