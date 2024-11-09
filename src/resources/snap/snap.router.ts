@@ -432,3 +432,39 @@ snapRouter.openapi(answerSnapOpenAPI, async (c) => {
 
   return c.json(response, 201);
 });
+
+const getAnswersOpenAPI = openAPI.route("GET", "/answers/{id}", {
+  group: "Snap",
+  params: z.object({
+    id: z.string(),
+  }),
+  query: z.object({
+    requestingUserId: z.string().optional(),
+  }),
+  responses: {
+    200: {
+      description: "Get all answers from a snap",
+      schema: snapSchema.array(),
+    },
+    400: {
+      description: "Snap not found",
+      schema: errorSchema,
+    },
+  },
+});
+
+snapRouter.openapi(getAnswersOpenAPI, async (c) => {
+  const params = c.req.valid("param");
+  const query = c.req.valid("query");
+  const response = await snapService.getAnswers(params.id, query.requestingUserId);
+  
+  if (!response) {
+    throw new CustomError({
+      title: "Snap not found",
+      status: 400,
+      detail: "Snap not found",
+    });
+  }
+
+  return c.json(response, 200);
+});

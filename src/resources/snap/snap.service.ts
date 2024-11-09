@@ -439,4 +439,19 @@ export class SnapService {
     return result;
   }
 
+  async getAnswers(id: string, requestingUserId?: string) {
+    const answers_ids = await db.snap.findMany({
+      select: { id: true },
+      where: { parentId: id },
+    });
+
+    const answers = await Promise.all(
+      answers_ids.map(async (result) => {
+        return await this.get(result.id, requestingUserId);
+      })
+    );
+
+    return answers.filter((answer) => answer !== null);
+  }
+
 }
