@@ -4,13 +4,16 @@ import { CustomError } from "../../utils/error.js";
 import { get } from "http";
 
 export class SnapService {
-  async create(data: {
-    userId: string;
-    username: string;
-    content: string;
-    isPrivate: boolean;
-    medias: { path: string; mimeType: string }[];
-  }, parentId?: string) {
+  async create(
+    data: {
+      userId: string;
+      username: string;
+      content: string;
+      isPrivate: boolean;
+      medias: { path: string; mimeType: string }[];
+    },
+    parentId?: string
+  ) {
     const words = data.content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
     let hashtags = [];
     let mentions = [];
@@ -45,7 +48,7 @@ export class SnapService {
       },
     });
 
-    return { ...snap, likes: 0, shares: 0, comments: 0};
+    return { ...snap, likes: 0, shares: 0, comments: 0 };
   }
 
   async getSnaps(
@@ -64,7 +67,7 @@ export class SnapService {
         sharedSnap: {
           include: {
             medias: true,
-            _count: { select: { likes: true, sharedBy: true} },
+            _count: { select: { likes: true, sharedBy: true } },
             sharedBy: {
               select: { userId: true },
               where: { userId: requestingUserId ?? "__no_user__" },
@@ -73,7 +76,7 @@ export class SnapService {
               select: { userId: true },
               where: { userId: requestingUserId ?? "__no_user__" },
             },
-          }
+          },
         },
         medias: true,
         _count: { select: { likes: true, sharedBy: true } },
@@ -88,6 +91,7 @@ export class SnapService {
       },
       take: filters.limit ?? 20,
       where: {
+        parentId: null,
         username: { equals: filters.username, mode: "insensitive" },
         hashtags: filters.hashtag
           ? { has: filters.hashtag.toLowerCase() }
@@ -102,33 +106,40 @@ export class SnapService {
       },
       orderBy: { createdAt: "desc" },
     });
-    return await Promise.all(snaps.map(async (snap) => {
-      const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
-      let formattedSharedSnap = null;
-      if (sharedSnap) {
-        const { _count: sharedSnapCount, likes: sharedSnapLikes, sharedBy: sharedSnapBy , ...sharedSnapData } = sharedSnap;
-        const comments = await this.getComments(sharedSnapData.id);
-        formattedSharedSnap = {
-          ...sharedSnapData,
-          likedByUser: sharedSnapLikes.length > 0,
-          likes: sharedSnapCount.likes,
-          shares: sharedSnapCount.sharedBy,
-          sharedByUser: sharedSnapBy.length > 0,
+    return await Promise.all(
+      snaps.map(async (snap) => {
+        const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
+        let formattedSharedSnap = null;
+        if (sharedSnap) {
+          const {
+            _count: sharedSnapCount,
+            likes: sharedSnapLikes,
+            sharedBy: sharedSnapBy,
+            ...sharedSnapData
+          } = sharedSnap;
+          const comments = await this.getComments(sharedSnapData.id);
+          formattedSharedSnap = {
+            ...sharedSnapData,
+            likedByUser: sharedSnapLikes.length > 0,
+            likes: sharedSnapCount.likes,
+            shares: sharedSnapCount.sharedBy,
+            sharedByUser: sharedSnapBy.length > 0,
+            comments: comments,
+          };
+        }
+        //console.log(formattedSharedSnap)
+        const comments = await this.getComments(snapData.id);
+        return {
+          ...snapData,
+          likedByUser: likes.length > 0,
+          likes: _count.likes,
+          sharedSnap: formattedSharedSnap,
+          shares: _count.sharedBy,
+          sharedByUser: sharedBy.length > 0,
           comments: comments,
         };
-      }
-      //console.log(formattedSharedSnap)
-      const comments = await this.getComments(snapData.id);
-      return {
-        ...snapData,
-        likedByUser: likes.length > 0,
-        likes: _count.likes,
-        sharedSnap: formattedSharedSnap,
-        shares: _count.sharedBy,
-        sharedByUser: sharedBy.length > 0,
-        comments: comments,
-      };
-    }));
+      })
+    );
   }
 
   async get(id: string, requestingUserId?: string) {
@@ -138,19 +149,19 @@ export class SnapService {
           sharedSnap: {
             include: {
               medias: true,
-              _count: { select: { likes: true, sharedBy: true} },
+              _count: { select: { likes: true, sharedBy: true } },
               likes: {
                 select: { userId: true },
                 where: { userId: requestingUserId ?? "__no_user__" },
               },
-            }
+            },
           },
           sharedBy: {
             select: { userId: true },
             where: { userId: requestingUserId ?? "__no_user__" },
           },
           medias: true,
-          _count: { select: { likes: true, sharedBy: true} },
+          _count: { select: { likes: true, sharedBy: true } },
           likes: {
             select: { userId: true },
             where: { userId: requestingUserId ?? "__no_user__" },
@@ -165,7 +176,11 @@ export class SnapService {
 
       let formattedSharedSnap = null;
       if (sharedSnap) {
-        const { _count: sharedSnapCount, likes: sharedSnapLikes, ...sharedSnapData } = sharedSnap;
+        const {
+          _count: sharedSnapCount,
+          likes: sharedSnapLikes,
+          ...sharedSnapData
+        } = sharedSnap;
         formattedSharedSnap = {
           ...sharedSnapData,
           likedByUser: sharedSnapLikes.length > 0,
@@ -284,17 +299,17 @@ export class SnapService {
         sharedId: id, // referencia al snap original
       },
     });
-  
+
     return await this.get(sharedSnap.id);
   }
 
   async deleteShared(id: string, userId: string) {
     try {
       return await db.snap.deleteMany({
-        where: { 
+        where: {
           userId: userId,
-          sharedSnap: { id: id }
-        }
+          sharedSnap: { id: id },
+        },
       });
     } catch (error) {
       throw new CustomError({
@@ -306,12 +321,12 @@ export class SnapService {
   }
 
   async getShares(id: string) {
-    let snapShare =  await db.snap.findMany({
+    let snapShare = await db.snap.findMany({
       include: {
         sharedSnap: {
           include: {
             medias: true,
-            _count: { select: { likes: true, sharedBy: true} },
+            _count: { select: { likes: true, sharedBy: true } },
             sharedBy: {
               select: { userId: true },
               where: { userId: id ?? "__no_user__" },
@@ -320,14 +335,14 @@ export class SnapService {
               select: { userId: true },
               where: { userId: id ?? "__no_user__" },
             },
-          }
+          },
         },
         medias: true,
         sharedBy: {
           select: { userId: true },
           where: { userId: id ?? "__no_user__" },
         },
-        _count: { select: { likes: true, sharedBy: true} },
+        _count: { select: { likes: true, sharedBy: true } },
         likes: {
           select: { userId: true },
           where: { userId: id ?? "__no_user__" },
@@ -335,47 +350,54 @@ export class SnapService {
       },
       where: {
         userId: id,
-        sharedId: {not : null},
+        sharedId: { not: null },
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
     });
 
-    return await Promise.all(snapShare.map(async (snap) => {
-      const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
-      let formattedSharedSnap = null;
-      if (sharedSnap) {
-        const { _count: sharedSnapCount, likes: sharedSnapLikes, sharedBy: sharedSnapBy , ...sharedSnapData } = sharedSnap;
-        const comments = await this.getComments(sharedSnapData.id);
-        formattedSharedSnap = {
-          ...sharedSnapData,
-          likedByUser: sharedSnapLikes.length > 0,
-          likes: sharedSnapCount.likes,
-          shares: sharedSnapCount.sharedBy,
-          sharedByUser: sharedSnapBy.length > 0,
+    return await Promise.all(
+      snapShare.map(async (snap) => {
+        const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
+        let formattedSharedSnap = null;
+        if (sharedSnap) {
+          const {
+            _count: sharedSnapCount,
+            likes: sharedSnapLikes,
+            sharedBy: sharedSnapBy,
+            ...sharedSnapData
+          } = sharedSnap;
+          const comments = await this.getComments(sharedSnapData.id);
+          formattedSharedSnap = {
+            ...sharedSnapData,
+            likedByUser: sharedSnapLikes.length > 0,
+            likes: sharedSnapCount.likes,
+            shares: sharedSnapCount.sharedBy,
+            sharedByUser: sharedSnapBy.length > 0,
+            comments: comments,
+          };
+        }
+
+        const comments = await this.getComments(snapData.id);
+        return {
+          ...snapData,
+          likedByUser: likes.length > 0,
+          likes: _count.likes,
+          sharedSnap: formattedSharedSnap,
+          shares: _count.sharedBy,
+          sharedByUser: sharedBy.length > 0,
           comments: comments,
         };
-      }
-
-      const comments = await this.getComments(snapData.id);
-      return {
-        ...snapData,
-        likedByUser: likes.length > 0,
-        likes: _count.likes,
-        sharedSnap: formattedSharedSnap,
-        shares: _count.sharedBy,
-        sharedByUser: sharedBy.length > 0,
-        comments: comments,
-      };
-    }));
+      })
+    );
   }
 
   async getLikes(id: string) {
-    let snapLikes =  await db.snap.findMany({
+    let snapLikes = await db.snap.findMany({
       include: {
         sharedSnap: {
           include: {
             medias: true,
-            _count: { select: { likes: true, sharedBy: true} },
+            _count: { select: { likes: true, sharedBy: true } },
             sharedBy: {
               select: { userId: true },
               where: { userId: id ?? "__no_user__" },
@@ -384,14 +406,14 @@ export class SnapService {
               select: { userId: true },
               where: { userId: id ?? "__no_user__" },
             },
-          }
+          },
         },
         medias: true,
         sharedBy: {
           select: { userId: true },
           where: { userId: id ?? "__no_user__" },
         },
-        _count: { select: { likes: true, sharedBy: true} },
+        _count: { select: { likes: true, sharedBy: true } },
         likes: {
           select: { userId: true },
           where: { userId: id ?? "__no_user__" },
@@ -400,37 +422,44 @@ export class SnapService {
       where: {
         likes: { some: { userId: id } },
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
     });
 
-    return await Promise.all(snapLikes.map(async (snap) => {
-      const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
-      let formattedSharedSnap = null;
-      if (sharedSnap) {
-        const { _count: sharedSnapCount, likes: sharedSnapLikes, sharedBy: sharedSnapBy , ...sharedSnapData } = sharedSnap;
-        const comments = await this.getComments(sharedSnapData.id);
-        formattedSharedSnap = {
-          ...sharedSnapData,
-          likedByUser: sharedSnapLikes.length > 0,
-          likes: sharedSnapCount.likes,
-          shares: sharedSnapCount.sharedBy,
-          sharedByUser: sharedSnapBy.length > 0,
+    return await Promise.all(
+      snapLikes.map(async (snap) => {
+        const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
+        let formattedSharedSnap = null;
+        if (sharedSnap) {
+          const {
+            _count: sharedSnapCount,
+            likes: sharedSnapLikes,
+            sharedBy: sharedSnapBy,
+            ...sharedSnapData
+          } = sharedSnap;
+          const comments = await this.getComments(sharedSnapData.id);
+          formattedSharedSnap = {
+            ...sharedSnapData,
+            likedByUser: sharedSnapLikes.length > 0,
+            likes: sharedSnapCount.likes,
+            shares: sharedSnapCount.sharedBy,
+            sharedByUser: sharedSnapBy.length > 0,
+            comments: comments,
+          };
+        }
+
+        const comments = await this.getComments(snapData.id);
+        return {
+          ...snapData,
+          likedByUser: likes.length > 0,
+          likes: _count.likes,
+          sharedSnap: formattedSharedSnap,
+          shares: _count.sharedBy,
+          sharedByUser: sharedBy.length > 0,
           comments: comments,
         };
-      }
-
-      const comments = await this.getComments(snapData.id);
-      return {
-        ...snapData,
-        likedByUser: likes.length > 0,
-        likes: _count.likes,
-        sharedSnap: formattedSharedSnap,
-        shares: _count.sharedBy,
-        sharedByUser: sharedBy.length > 0,
-        comments: comments,
-      };
-    }));
-  } 
+      })
+    );
+  }
 
   async getComments(id: string) {
     const result = await db.snap.count({
@@ -453,5 +482,4 @@ export class SnapService {
 
     return answers.filter((answer) => answer !== null);
   }
-
 }
