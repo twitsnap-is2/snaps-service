@@ -243,6 +243,12 @@ export class SnapService {
       await db.media.deleteMany({
         where: { snapId: id },
       });
+      await db.likes.deleteMany({
+        where: { snapId: id },
+      });
+      await db.mention.deleteMany({
+        where: { snapId: id },
+      });
       return await db.snap.delete({
         where: { id: id },
       });
