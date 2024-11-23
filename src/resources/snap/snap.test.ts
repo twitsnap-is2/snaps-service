@@ -24,6 +24,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await db.mention.deleteMany();
   await db.snap.deleteMany();
 });
 
@@ -32,7 +33,6 @@ describe("GET /snaps/", () => {
     const res = await app.request("/snaps");
     expect(res.status).toBe(200);
     const body = await res.json();
-    console.log(body);
     expect(body[0].username).toBe("User 2");
     expect(body[0].content).toBe("Snap 2");
     expect(body[1].username).toBe("User 1");
@@ -53,6 +53,7 @@ describe("POST /snap", () => {
         content: "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
         isPrivate: false,
         medias: [],
+        mentions: [{ userId: "100", username: "NeymarJr" }],
       }),
     });
     expect(res.status).toBe(201);
@@ -61,9 +62,11 @@ describe("POST /snap", () => {
     expect(body.userId).toBe("1");
     expect(body.username).toBe("Messi");
     expect(body.content).toBe("Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona");
-    expect(body.mentions).toEqual(["@neymarjr"]);
     expect(body.hashtags).toEqual(["#barcelona"]);
     expect(body.medias).toEqual([]);
+    expect(body.mentions.length).toBe(1);
+    expect(body.mentions[0].userId).toBe("100");
+    expect(body.mentions[0].username).toBe("NeymarJr");
     expect(body.isPrivate).toBe(false);
   });
 
@@ -84,7 +87,8 @@ describe("POST /snap", () => {
       title: "Invalid request POST /snaps",
       detail: `content: Required,
 isPrivate: Required,
-medias: Required`,
+medias: Required,
+mentions: Required`,
       instance: "/snaps",
       status: 400,
     });
@@ -102,6 +106,7 @@ medias: Required`,
         content: "",
         isPrivate: false,
         medias: [],
+        mentions: [],
       }),
     });
     expect(resEmptyContent.status).toBe(400);
@@ -124,6 +129,7 @@ medias: Required`,
         content: "a".repeat(281),
         isPrivate: false,
         medias: [],
+        mentions: [],
       }),
     });
     expect(resTooLongContent.status).toBe(400);
@@ -150,6 +156,7 @@ describe("GET /snaps/:id", () => {
         content: "Snap 1",
         isPrivate: false,
         medias: [],
+        mentions: [],
       }),
     });
     const body = await res.json();
@@ -191,6 +198,7 @@ describe("DELETE /snaps/:id", () => {
         content: "Snap 1",
         isPrivate: false,
         medias: [],
+        mentions: [],
       }),
     });
     const body = await res.json();
@@ -230,6 +238,7 @@ describe("PUT /snaps/:id", () => {
         content: "Snap 1",
         isPrivate: false,
         medias: [],
+        mentions: [],
       }),
     });
     const body = await res.json();

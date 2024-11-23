@@ -87,7 +87,6 @@ snapRouter.openapi(getOpenAPI, async (c) => {
   const params = c.req.valid("param");
   const query = c.req.valid("query");
   const response = await snapService.get(params.id, query.requestingUserId);
-  console.log(response);
   if (!response) {
     throw new CustomError({
       title: "Snap not found",
@@ -364,7 +363,6 @@ snapRouter.openapi(getSanpSharesOpenAPI, async (c) => {
   const params = c.req.valid("param");
 
   const response = await snapService.getShares(params.id);
-  console.log(response);
   return c.json(response, 200);
 });
 
@@ -385,7 +383,6 @@ snapRouter.openapi(
     const params = c.req.valid("param");
 
     const response = await snapService.getLikes(params.id);
-    console.log(response);
     return c.json(response, 200);
   }
 );
