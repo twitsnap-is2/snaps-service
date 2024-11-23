@@ -26,6 +26,9 @@ export class LikeService {
       }
       return;
     } catch (error) {
+      if (error instanceof CustomError) {
+        throw error;
+      }
       throw new CustomError({
         title: "Error updating likes",
         status: 500,
@@ -55,6 +58,10 @@ export class LikeService {
       }
       return;
     } catch (error) {
+      if (error instanceof CustomError) {
+        throw error;
+      }
+
       throw new CustomError({
         title: "Error updating likes",
         status: 500,
