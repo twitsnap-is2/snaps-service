@@ -1,7 +1,5 @@
-import { use } from "hono/jsx";
 import { db } from "../../utils/db.js";
 import { CustomError } from "../../utils/error.js";
-import { get } from "http";
 
 export class SnapService {
   async create(
@@ -11,6 +9,7 @@ export class SnapService {
       content: string;
       isPrivate: boolean;
       medias: { path: string; mimeType: string }[];
+      mentions: { userId: string; username: string }[];
     },
     parentId?: string
   ) {
@@ -18,19 +17,16 @@ export class SnapService {
     let hashtags = [];
     let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].trim().charAt(0) === "#" &&
-        hashtags.push(words[i].trim().toLowerCase());
-      words[i].trim().charAt(0) === "@" &&
-        mentions.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "#" && hashtags.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "@" && mentions.push(words[i].trim().toLowerCase());
     }
 
-    const snap = await db.snap.create({
+    const { newMentions, ...snap } = await db.snap.create({
       data: {
         userId: data.userId,
         username: data.username,
         content: data.content,
         hashtags: hashtags,
-        mentions: mentions,
         isPrivate: data.isPrivate,
         sharedId: null,
         parentId: parentId ?? null,
@@ -42,13 +38,22 @@ export class SnapService {
             })),
           },
         },
+        newMentions: {
+          createMany: {
+            data: data.mentions?.map((mention) => ({
+              userId: mention.userId,
+              username: mention.username,
+            })),
+          },
+        },
       },
       include: {
         medias: true,
+        newMentions: true,
       },
     });
 
-    return { ...snap, likes: 0, shares: 0, comments: 0 };
+    return { ...snap, mentions: newMentions, likes: 0, shares: 0, comments: 0 };
   }
 
   async getSnaps(
@@ -67,6 +72,7 @@ export class SnapService {
         sharedSnap: {
           include: {
             medias: true,
+            newMentions: true,
             _count: { select: { likes: true, sharedBy: true } },
             sharedBy: {
               select: { userId: true },
@@ -79,6 +85,7 @@ export class SnapService {
           },
         },
         medias: true,
+        newMentions: true,
         _count: { select: { likes: true, sharedBy: true } },
         sharedBy: {
           select: { userId: true },
@@ -93,12 +100,8 @@ export class SnapService {
       where: {
         parentId: null,
         username: { equals: filters.username, mode: "insensitive" },
-        hashtags: filters.hashtag
-          ? { has: filters.hashtag.toLowerCase() }
-          : undefined,
-        content: filters.content
-          ? { contains: filters.content, mode: "insensitive" }
-          : undefined,
+        hashtags: filters.hashtag ? { has: filters.hashtag.toLowerCase() } : undefined,
+        content: filters.content ? { contains: filters.content, mode: "insensitive" } : undefined,
         createdAt: {
           gt: filters.dateFrom,
           lt: filters.dateTo,
@@ -108,18 +111,20 @@ export class SnapService {
     });
     return await Promise.all(
       snaps.map(async (snap) => {
-        const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
+        const { _count, likes, sharedSnap, sharedBy, newMentions, ...snapData } = snap;
         let formattedSharedSnap = null;
         if (sharedSnap) {
           const {
             _count: sharedSnapCount,
             likes: sharedSnapLikes,
             sharedBy: sharedSnapBy,
+            newMentions: sharedNewMentions,
             ...sharedSnapData
           } = sharedSnap;
           const comments = await this.getComments(sharedSnapData.id);
           formattedSharedSnap = {
             ...sharedSnapData,
+            mentions: sharedNewMentions,
             likedByUser: sharedSnapLikes.length > 0,
             likes: sharedSnapCount.likes,
             shares: sharedSnapCount.sharedBy,
@@ -127,10 +132,10 @@ export class SnapService {
             comments: comments,
           };
         }
-        //console.log(formattedSharedSnap)
         const comments = await this.getComments(snapData.id);
         return {
           ...snapData,
+          mentions: newMentions,
           likedByUser: likes.length > 0,
           likes: _count.likes,
           sharedSnap: formattedSharedSnap,
@@ -149,6 +154,7 @@ export class SnapService {
           sharedSnap: {
             include: {
               medias: true,
+              newMentions: true,
               _count: { select: { likes: true, sharedBy: true } },
               likes: {
                 select: { userId: true },
@@ -161,6 +167,7 @@ export class SnapService {
             where: { userId: requestingUserId ?? "__no_user__" },
           },
           medias: true,
+          newMentions: true,
           _count: { select: { likes: true, sharedBy: true } },
           likes: {
             select: { userId: true },
@@ -172,13 +179,14 @@ export class SnapService {
       if (!snap) {
         return null;
       }
-      const { _count, likes, sharedBy, sharedSnap, ...snapData } = snap;
+      const { _count, likes, sharedBy, sharedSnap, newMentions, ...snapData } = snap;
 
       let formattedSharedSnap = null;
       if (sharedSnap) {
         const {
           _count: sharedSnapCount,
           likes: sharedSnapLikes,
+          newMentions: sharedNewMentions,
           ...sharedSnapData
         } = sharedSnap;
         formattedSharedSnap = {
@@ -187,6 +195,7 @@ export class SnapService {
           likes: sharedSnapCount.likes,
           shares: _count.sharedBy,
           comments: await this.getComments(sharedSnapData.id),
+          mentions: sharedNewMentions,
         };
       }
 
@@ -198,6 +207,7 @@ export class SnapService {
         shares: _count.sharedBy,
         sharedByUser: sharedBy.length > 0,
         comments: await this.getComments(snapData.id),
+        mentions: newMentions,
       };
 
       return formattedSnap;
@@ -249,16 +259,13 @@ export class SnapService {
     id: string,
     content: string,
     isPrivate: boolean,
-    medias: { path: string; mimeType: string }[]
+    medias: { path: string; mimeType: string }[],
+    mentions: { userId: string; username: string }[]
   ) {
     const words = content.replaceAll(/[,\.!?%\(\)]/g, "").split(" ");
     let hashtags = [];
-    let mentions = [];
     for (let i = 0; i < words.length; i++) {
-      words[i].trim().charAt(0) === "#" &&
-        hashtags.push(words[i].trim().toLowerCase());
-      words[i].trim().charAt(0) === "@" &&
-        mentions.push(words[i].trim().toLowerCase());
+      words[i].trim().charAt(0) === "#" && hashtags.push(words[i].trim().toLowerCase());
     }
 
     try {
@@ -268,12 +275,17 @@ export class SnapService {
         data: {
           content: content,
           hashtags: hashtags,
-          mentions: mentions,
           isPrivate: isPrivate,
           medias: {
             deleteMany: {},
             createMany: {
               data: medias,
+            },
+          },
+          newMentions: {
+            deleteMany: {},
+            createMany: {
+              data: mentions,
             },
           },
         },
@@ -295,7 +307,6 @@ export class SnapService {
         userId: userId,
         username: username,
         hashtags: [],
-        mentions: [],
         sharedId: id, // referencia al snap original
       },
     });
@@ -326,6 +337,7 @@ export class SnapService {
         sharedSnap: {
           include: {
             medias: true,
+            newMentions: true,
             _count: { select: { likes: true, sharedBy: true } },
             sharedBy: {
               select: { userId: true },
@@ -338,6 +350,7 @@ export class SnapService {
           },
         },
         medias: true,
+        newMentions: true,
         sharedBy: {
           select: { userId: true },
           where: { userId: id ?? "__no_user__" },
@@ -357,13 +370,14 @@ export class SnapService {
 
     return await Promise.all(
       snapShare.map(async (snap) => {
-        const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
+        const { _count, likes, sharedSnap, sharedBy, newMentions, ...snapData } = snap;
         let formattedSharedSnap = null;
         if (sharedSnap) {
           const {
             _count: sharedSnapCount,
             likes: sharedSnapLikes,
             sharedBy: sharedSnapBy,
+            newMentions: sharedNewMentions,
             ...sharedSnapData
           } = sharedSnap;
           const comments = await this.getComments(sharedSnapData.id);
@@ -374,6 +388,7 @@ export class SnapService {
             shares: sharedSnapCount.sharedBy,
             sharedByUser: sharedSnapBy.length > 0,
             comments: comments,
+            mentions: sharedNewMentions,
           };
         }
 
@@ -386,6 +401,7 @@ export class SnapService {
           shares: _count.sharedBy,
           sharedByUser: sharedBy.length > 0,
           comments: comments,
+          mentions: newMentions,
         };
       })
     );
@@ -397,6 +413,7 @@ export class SnapService {
         sharedSnap: {
           include: {
             medias: true,
+            newMentions: true,
             _count: { select: { likes: true, sharedBy: true } },
             sharedBy: {
               select: { userId: true },
@@ -409,6 +426,7 @@ export class SnapService {
           },
         },
         medias: true,
+        newMentions: true,
         sharedBy: {
           select: { userId: true },
           where: { userId: id ?? "__no_user__" },
@@ -427,13 +445,14 @@ export class SnapService {
 
     return await Promise.all(
       snapLikes.map(async (snap) => {
-        const { _count, likes, sharedSnap, sharedBy, ...snapData } = snap;
+        const { _count, likes, sharedSnap, sharedBy, newMentions, ...snapData } = snap;
         let formattedSharedSnap = null;
         if (sharedSnap) {
           const {
             _count: sharedSnapCount,
             likes: sharedSnapLikes,
             sharedBy: sharedSnapBy,
+            newMentions: sharedNewMentions,
             ...sharedSnapData
           } = sharedSnap;
           const comments = await this.getComments(sharedSnapData.id);
@@ -444,6 +463,7 @@ export class SnapService {
             shares: sharedSnapCount.sharedBy,
             sharedByUser: sharedSnapBy.length > 0,
             comments: comments,
+            mentions: sharedNewMentions,
           };
         }
 
@@ -456,6 +476,7 @@ export class SnapService {
           shares: _count.sharedBy,
           sharedByUser: sharedBy.length > 0,
           comments: comments,
+          mentions: newMentions,
         };
       })
     );

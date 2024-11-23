@@ -8,21 +8,21 @@ datasource db {
 }
 
 model Snap {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   content     String
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   userId      String
   username    String
-  isPrivate   Boolean  @default(false)
-  isBlocked   Boolean  @default(false)
+  isPrivate   Boolean   @default(false)
+  isBlocked   Boolean   @default(false)
   hashtags    String[]
-  mentions    String[]
   medias      Media[]
-  likes       Likes[] 
-  sharedId    String?  //  
-  sharedSnap  Snap?    @relation("SharedSnap", fields: [sharedId], references: [id])
-  sharedBy    Snap[]   @relation("SharedSnap") // Campo inverso para indicar quién compartió este snap
+  likes       Likes[]
+  sharedId    String? //  
+  sharedSnap  Snap?     @relation("SharedSnap", fields: [sharedId], references: [id])
+  sharedBy    Snap[]    @relation("SharedSnap") // Campo inverso para indicar quién compartió este snap
   parentId    String? // En caso de que sea una respuesta a otro snap
+  newMentions Mention[]
 }
 
 model Likes {
@@ -36,6 +36,14 @@ model Media {
   id       String @id @default(uuid())
   path     String
   mimeType String
+  snapId   String
+  snap     Snap   @relation(fields: [snapId], references: [id])
+}
+
+model Mention {
+  id       String @id @default(uuid())
+  userId   String
+  username String
   snapId   String
   snap     Snap   @relation(fields: [snapId], references: [id])
 }

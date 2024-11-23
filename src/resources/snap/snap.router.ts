@@ -17,7 +17,6 @@ export const baseSnapSchema = z.object({
   isPrivate: z.boolean(),
   isBlocked: z.boolean(),
   hashtags: z.array(z.string()),
-  mentions: z.array(z.string()),
   likes: z.number(),
   comments: z.number(),
   likedByUser: z.boolean().optional(),
@@ -31,6 +30,7 @@ export const baseSnapSchema = z.object({
       mimeType: z.string(),
     })
   ),
+  mentions: z.array(z.object({ userId: z.string(), username: z.string() })),
 });
 
 // Define el esquema completo incluyendo la referencia recursiva a baseSnapSchema
@@ -115,6 +115,7 @@ const postSnapOpenAPI = openAPI.route("POST", "/", {
         mimeType: z.string(),
       })
     ),
+    mentions: z.array(z.object({ userId: z.string(), username: z.string() })),
   }),
   responses: {
     201: {
@@ -228,6 +229,7 @@ const editSnapOpenAPI = openAPI.route("PUT", "/{id}", {
         })
       )
       .optional(),
+    mentions: z.array(z.object({ userId: z.string(), username: z.string() })).optional(),
   }),
   responses: {
     200: {
@@ -252,7 +254,8 @@ snapRouter.openapi(editSnapOpenAPI, async (c) => {
     params.id,
     body.content,
     body.isPrivate,
-    body.medias ?? []
+    body.medias ?? [],
+    body.mentions ?? []
   );
 
   if (!response) {
@@ -355,7 +358,7 @@ const getSanpSharesOpenAPI = openAPI.route("GET", "/shares/user/{id}", {
       schema: snapSchema.array(),
     },
   },
-}); 
+});
 
 snapRouter.openapi(getSanpSharesOpenAPI, async (c) => {
   const params = c.req.valid("param");
@@ -365,24 +368,27 @@ snapRouter.openapi(getSanpSharesOpenAPI, async (c) => {
   return c.json(response, 200);
 });
 
-snapRouter.openapi(openAPI.route("GET", "/likes/user/{id}", {
-  group: "Snap",
-  params: z.object({
-    id: z.string(),
-  }),
-  responses: {
-    200: {
-      description: "Get all likes",
-      schema: snapSchema.array(),
+snapRouter.openapi(
+  openAPI.route("GET", "/likes/user/{id}", {
+    group: "Snap",
+    params: z.object({
+      id: z.string(),
+    }),
+    responses: {
+      200: {
+        description: "Get all likes",
+        schema: snapSchema.array(),
+      },
     },
-  },
-}), async (c) => {
-  const params = c.req.valid("param");
+  }),
+  async (c) => {
+    const params = c.req.valid("param");
 
-  const response = await snapService.getLikes(params.id);
-  console.log(response);
-  return c.json(response, 200);
-});
+    const response = await snapService.getLikes(params.id);
+    console.log(response);
+    return c.json(response, 200);
+  }
+);
 
 const answerSnapOpenAPI = openAPI.route("POST", "/answer/{id}", {
   group: "Snap",
@@ -403,6 +409,7 @@ const answerSnapOpenAPI = openAPI.route("POST", "/answer/{id}", {
         mimeType: z.string(),
       })
     ),
+    mentions: z.array(z.object({ userId: z.string(), username: z.string() })),
   }),
   responses: {
     201: {
@@ -414,7 +421,7 @@ const answerSnapOpenAPI = openAPI.route("POST", "/answer/{id}", {
       schema: errorSchema,
     },
   },
-}); 
+});
 
 snapRouter.openapi(answerSnapOpenAPI, async (c) => {
   const params = c.req.valid("param");
@@ -457,7 +464,7 @@ snapRouter.openapi(getAnswersOpenAPI, async (c) => {
   const params = c.req.valid("param");
   const query = c.req.valid("query");
   const response = await snapService.getAnswers(params.id, query.requestingUserId);
-  
+
   if (!response) {
     throw new CustomError({
       title: "Snap not found",
