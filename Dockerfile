@@ -6,7 +6,7 @@ ARG DATABASE_URL
 
 COPY . .
 RUN npm i 
-RUN npx prisma db push
+RUN npx prisma db push --accept-data-loss
 RUN npm run build
 
 
