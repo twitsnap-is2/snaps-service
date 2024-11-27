@@ -155,7 +155,10 @@ export const openAPI = {
 };
 
 const useApiKey: MiddlewareHandler = async (c: Context<any>, next: Next) => {
-  console.log("useApiKey");
+  if (env.ENV === "test") {
+    await next();
+    return;
+  }
   const bearer = c.req.header().authorization as string | undefined;
   const token = bearer?.split(" ").pop();
 
