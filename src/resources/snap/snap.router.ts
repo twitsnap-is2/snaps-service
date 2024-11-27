@@ -2,6 +2,8 @@ import { SnapService } from "./snap.service.js";
 import { z } from "@hono/zod-openapi";
 import { openAPI } from "../../utils/open-api.js";
 import { CustomError, errorSchema } from "../../utils/error.js";
+import { connectQueue, sendData } from "../../external/rabbitmq.js";
+import { create } from "domain";
 
 export const snapRouter = openAPI.router();
 
@@ -140,6 +142,17 @@ snapRouter.openapi(postSnapOpenAPI, async (c) => {
     });
   }
 
+  const metricData = {
+    providedBy: "snaps-service",
+    body: {
+      content: response.content,
+      createdAt: response.createdAt,
+      hashtags: response.hashtags,
+    },
+  };
+  sendData(metricData);
+  console.log("Metric data sent to queue");
+
   return c.json(response, 201);
 });
 
@@ -228,7 +241,9 @@ const editSnapOpenAPI = openAPI.route("PUT", "/{id}", {
         })
       )
       .optional(),
-    mentions: z.array(z.object({ userId: z.string(), username: z.string() })).optional(),
+    mentions: z
+      .array(z.object({ userId: z.string(), username: z.string() }))
+      .optional(),
   }),
   responses: {
     200: {
@@ -293,7 +308,11 @@ snapRouter.openapi(shareSnapOpenAPI, async (c) => {
   const params = c.req.valid("param");
   const body = c.req.valid("json");
 
-  const response = await snapService.share(params.id, body.userId, body.username);
+  const response = await snapService.share(
+    params.id,
+    body.userId,
+    body.username
+  );
 
   if (!response) {
     throw new CustomError({
@@ -460,7 +479,10 @@ const getAnswersOpenAPI = openAPI.route("GET", "/answers/{id}", {
 snapRouter.openapi(getAnswersOpenAPI, async (c) => {
   const params = c.req.valid("param");
   const query = c.req.valid("query");
-  const response = await snapService.getAnswers(params.id, query.requestingUserId);
+  const response = await snapService.getAnswers(
+    params.id,
+    query.requestingUserId
+  );
 
   if (!response) {
     throw new CustomError({

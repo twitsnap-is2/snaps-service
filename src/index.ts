@@ -8,6 +8,7 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { openAPI } from "./utils/open-api.js";
 import { errorHandler } from "./utils/error.js";
 import { likeRouter } from "./resources/like/like.router.js";
+import { connectQueue } from "./external/rabbitmq.js";
 
 export const app = openAPI.router();
 
@@ -37,6 +38,8 @@ app.get("/swagger", swaggerUI({ url: "/openapi.json" }));
 
 app.route("/snaps", snapRouter);
 app.route("/likes", likeRouter);
+
+await connectQueue();
 
 serve({ fetch: app.fetch, port: env.PORT, hostname: env.HOSTNAME }, () => {
   console.log(`Running at: http://${env.HOSTNAME}:${env.PORT}`);
