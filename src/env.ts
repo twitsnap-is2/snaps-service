@@ -10,7 +10,8 @@ export const env = createEnv({
     ENV: z.enum(["development", "production", "test"]),
     HOSTNAME: z.coerce.string().default("localhost"),
     PORT: z.coerce.number().default(3000),
-
+    API_KEY: z.string(),
+    API_SERVICE_MANAGER: z.string().url(),
     POSTGRES_HOST: z.string(),
     POSTGRES_NAME: z.string(),
     POSTGRES_USER: z.string(),
