@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { app } from "../../index.js";
+import { env } from "../../env.js";
 
 describe("GET /snaps/", () => {
   test("Get snaps correctly", async () => {
@@ -23,7 +24,8 @@ describe("POST /snap", () => {
       body: JSON.stringify({
         userId: "1",
         username: "Messi",
-        content: "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
+        content:
+          "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona",
         isPrivate: false,
         medias: [],
         mentions: [{ userId: "100", username: "NeymarJr" }],
@@ -34,7 +36,9 @@ describe("POST /snap", () => {
     const body = await res.json();
     expect(body.userId).toBe("1");
     expect(body.username).toBe("Messi");
-    expect(body.content).toBe("Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona");
+    expect(body.content).toBe(
+      "Gran partido del equipo hoy! @NeymarJr hizo un golazo! #Barcelona"
+    );
     expect(body.hashtags).toEqual(["#barcelona"]);
     expect(body.medias).toEqual([]);
     expect(body.mentions.length).toBe(1);

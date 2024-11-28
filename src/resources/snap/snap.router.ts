@@ -4,6 +4,7 @@ import { openAPI } from "../../utils/open-api.js";
 import { CustomError, errorSchema } from "../../utils/error.js";
 import { connectQueue, sendMetric } from "../../external/rabbitmq.js";
 import { create } from "domain";
+import { env } from "process";
 
 export const snapRouter = openAPI.router();
 
@@ -150,8 +151,10 @@ snapRouter.openapi(postSnapOpenAPI, async (c) => {
       hashtags: response.hashtags,
     },
   };
-  sendMetric(metricData);
-  console.log("Metric data sent to queue");
+  if (env.ENV !== "test") {
+    sendMetric(metricData);
+    console.log("Metric data sent to queue");
+  }
 
   return c.json(response, 201);
 });
