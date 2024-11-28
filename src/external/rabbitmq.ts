@@ -1,4 +1,5 @@
 import amqp from "amqplib";
+import { env } from "../env.js";
 
 var channel: amqp.Channel, connection: amqp.Connection; //global variables
 
@@ -13,7 +14,7 @@ export type Metrics = {
 
 export async function connectQueue() {
   try {
-    connection = await amqp.connect("amqp://localhost:5672");
+    connection = await amqp.connect(env.RABBIT_URL);
     channel = await connection.createChannel();
 
     await channel.assertQueue("MetricsQueue");
@@ -22,7 +23,7 @@ export async function connectQueue() {
   }
 }
 
-export function sendData(data: Metrics) {
+export function sendMetric(data: Metrics) {
   // send data to queue
   channel.sendToQueue(
     "MetricsQueue",

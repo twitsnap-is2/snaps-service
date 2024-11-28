@@ -2,7 +2,7 @@ import { SnapService } from "./snap.service.js";
 import { z } from "@hono/zod-openapi";
 import { openAPI } from "../../utils/open-api.js";
 import { CustomError, errorSchema } from "../../utils/error.js";
-import { connectQueue, sendData } from "../../external/rabbitmq.js";
+import { connectQueue, sendMetric } from "../../external/rabbitmq.js";
 import { create } from "domain";
 
 export const snapRouter = openAPI.router();
@@ -150,7 +150,7 @@ snapRouter.openapi(postSnapOpenAPI, async (c) => {
       hashtags: response.hashtags,
     },
   };
-  sendData(metricData);
+  sendMetric(metricData);
   console.log("Metric data sent to queue");
 
   return c.json(response, 201);

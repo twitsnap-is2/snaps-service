@@ -12,6 +12,7 @@ export const env = createEnv({
     PORT: z.coerce.number().default(3000),
     API_KEY: z.string(),
     API_SERVICE_MANAGER: z.string().url(),
+    RABBIT_URL: z.string().url(),
     POSTGRES_HOST: z.string(),
     POSTGRES_NAME: z.string(),
     POSTGRES_USER: z.string(),
