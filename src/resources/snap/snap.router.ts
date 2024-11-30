@@ -152,7 +152,7 @@ snapRouter.openapi(postSnapOpenAPI, async (c) => {
     },
   };
   if (env.ENV !== "test") {
-    sendMetric(metricData);
+    sendMetric(metricData, "snaps");
     console.log("Metric data sent to queue");
   }
 
